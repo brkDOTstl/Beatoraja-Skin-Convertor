@@ -1,14 +1,17 @@
 # Beatoraja Skin Convertor
 
-Offline Rust/Tauri workbench for converting LR2 skins into beatoraja-friendly copies.
+**日本語** | [English](./README.en.md)
 
-## Current Status
+LR2スキンをbeatoraja向けのコピーへ変換する、オフライン動作のRust/Tauri製ツールです。
+元のスキンを変更せず、解析、ドライラン、個別変換、バッチ変換を行えます。
 
-The workbench provides structural analysis, dry-run reports, non-destructive copy output, batch
-jobs, and a bilingual English/Japanese desktop UI. It detects LR2 Play CSV files by content instead
-of folder name and recognizes SD, HD, FHD, and 4K canvases.
+## 現在の機能
 
-Implemented rules:
+このツールは、構造解析、ドライランレポート、非破壊コピー出力、バッチジョブ、
+日本語・英語を切り替えられるデスクトップUIを提供します。フォルダー名ではなく
+CSVの内容からLR2 Play CSVを検出し、SD、HD、FHD、4Kのキャンバスを認識します。
+
+実装済みルール:
 
 - `resolution-declaration`
 - `theme-path-rebase`
@@ -22,22 +25,22 @@ Implemented rules:
 - `lift-number`
 - `aspect-ratio-convert`
 
-Exposed but not automated yet:
+UIには表示されますが、まだ自動化されていないルール:
 
 - `lift-cover-custom-image`
 - `key-laser-rewrite`
 - `gauge-label-helper`
 
-Those three visual helpers require a skin-specific asset mapping and remain disabled in the UI.
+この3つの表示補助にはスキン固有の素材マッピングが必要なため、現在はUIで無効化されています。
 
-## Prerequisites
+## 必要環境
 
-Install Rust stable with Cargo. On Windows, Rust also needs the MSVC build tools and WebView2 used
-by Tauri applications.
+Cargoを含むRust stableをインストールしてください。Windowsでは、RustのMSVCビルドツールと
+Tauriアプリケーションが使用するWebView2も必要です。
 
 ## CLI
 
-From the workspace root:
+ワークスペースのルートで実行します。
 
 ```powershell
 cargo run -p skin_cli -- analyze --input "D:\BMS Skin\Lr2\Askin" --json
@@ -46,16 +49,16 @@ cargo run -p skin_cli -- generate --input "D:\BMS Skin\Skin Remod\Original Lr2\R
 cargo run -p skin_cli -- generate --input "D:\BMS Skin\Lr2\Askin" --output "D:\BMS Skin\Skin Remod\Generated\Askin-FHD" --rule aspect-ratio-convert --rule resolution-declaration --resolution 2 --target-aspect 16:9 --preserve-bomb-aspect --preserve-nowjudge-aspect --preserve-nowcombo-aspect
 ```
 
-An explicit `--resolution` automatically activates coordinate conversion and `#RESOLUTION`
-declaration updates. An explicit `--target-aspect` automatically activates coordinate conversion;
-the same dependency behavior applies to batch JSON and the desktop application.
+`--resolution`を明示すると、座標変換と`#RESOLUTION`宣言の更新が自動的に有効になります。
+`--target-aspect`を明示した場合も座標変換が自動的に有効になります。バッチJSONと
+デスクトップアプリケーションでも同じ依存関係が適用されます。
 
-For `#RESOLUTION,0` output, beatoraja horizontally stretches the 640x480 logical canvas to
-16:9. The converter therefore treats the selected layout aspect as the intended in-game aspect:
-4:3 output is centered in a 480x480 logical area before rendering, while 16:9 output uses the
-full 640x480 logical canvas. This adjustment runs when a target layout aspect is selected.
+`#RESOLUTION,0`では、beatorajaが640x480の論理キャンバスを16:9へ横方向に引き伸ばします。
+そのため、選択したレイアウト比率をゲーム内で意図する比率として扱います。4:3出力は
+描画前に480x480の論理領域へ中央配置し、16:9出力は640x480の論理キャンバス全体を使用します。
+この調整はターゲットのレイアウト比率を選択した場合に実行されます。
 
-Batch job shape:
+バッチジョブの形式:
 
 ```json
 {
@@ -78,32 +81,32 @@ Batch job shape:
 }
 ```
 
-Run:
+実行コマンド:
 
 ```powershell
 cargo run -p skin_cli -- batch --job ".\batch.json" --json
 ```
 
-## UI
+## デスクトップUI
 
-The Tauri frontend is static HTML/CSS/JS under `apps/skin_generator_ui/ui`. English and Japanese
-can be switched at runtime; the selection is stored locally. The batch queue snapshots each
-skin's current paths, rules, LIFT strategy, target resolution/aspect, and three material-protection
-options before sequential generation. Source skins and destination parent folders are selected
-through native folder dialogs; the generated output is automatically named after the selected
-source skin folder.
+Tauriフロントエンドは`apps/skin_generator_ui/ui`内の静的HTML/CSS/JSで構成されています。
+実行中に日本語と英語を切り替えられ、選択した言語はローカルに保存されます。バッチキューへ
+追加した時点で、各スキンのパス、ルール、LIFT方式、ターゲット解像度・比率、3種類の
+素材比率保護オプションを保存し、順番に生成します。変換元スキンと出力先の親フォルダーは
+ネイティブのフォルダー選択ダイアログで指定し、出力フォルダー名は変換元フォルダー名から
+自動生成されます。
 
-Run from the workspace:
+ワークスペースから実行:
 
 ```powershell
 cargo run -p beatoraja_skin_convertor
 ```
 
-The UI uses Tauri global invoke, so opening `index.html` directly only shows a static preview.
-Build the optimized executable with `cargo build --release -p beatoraja_skin_convertor`. The output
-is `target\\release\\beatoraja_skin_convertor.exe`.
+UIはTauriのグローバル`invoke`を使用するため、`index.html`を直接開いた場合は静的プレビューのみ
+表示されます。最適化済み実行ファイルは`cargo build --release -p beatoraja_skin_convertor`で
+ビルドできます。出力先は`target\\release\\beatoraja_skin_convertor.exe`です。
 
-## Verification Commands
+## 検証コマンド
 
 ```powershell
 cargo fmt --all -- --check
