@@ -1,0 +1,22 @@
+/target/
+/archive/
+/.omo/
+/NUL
+
+# Rust and Windows build artifacts
+*.pdb
+*.ilk
+*.exp
+*.lib
+
+# Local editor and OS metadata
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# Local environment files
+.env
+.env.*
+!.env.example

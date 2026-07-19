@@ -1,0 +1,135 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Beatoraja Skin Convertor</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <main class="app-shell">
+      <section class="setup-panel" aria-labelledby="setupTitle">
+        <div class="panel-heading">
+          <h2 id="setupTitle" data-i18n="setup">変換設定</h2>
+        </div>
+        <div class="field">
+          <label for="inputPath" data-i18n="sourceSkin">変換元スキン</label>
+          <div class="folder-picker">
+            <input id="inputPath" spellcheck="false" readonly value="D:\BMS Skin\Lr2\OA_DX_03" />
+            <button id="browseInputBtn" type="button" data-i18n="selectFolder">フォルダーを選択</button>
+          </div>
+        </div>
+        <div class="field">
+          <label for="destinationRoot" data-i18n="destinationRoot">出力先の親フォルダー</label>
+          <div class="folder-picker">
+            <input id="destinationRoot" spellcheck="false" readonly value="D:\BMS Skin\Skin Remod\Generated" />
+            <button id="browseDestinationBtn" type="button" data-i18n="selectFolder">フォルダーを選択</button>
+          </div>
+        </div>
+        <div class="field">
+          <label for="outputPath" data-i18n="outputFolder">出力フォルダー</label>
+          <input id="outputPath" spellcheck="false" readonly />
+        </div>
+        <div class="field">
+          <label for="preset" data-i18n="preset">プリセット</label>
+          <select id="preset">
+            <option value="safe-auto" data-i18n="presetSafe">基本互換</option>
+            <option value="visible-lift" selected data-i18n="presetVisible">可視 LIFT</option>
+            <option value="transparent-lift" data-i18n="presetTransparent">透明 LIFT</option>
+            <option value="fhd-4x3" data-i18n="preset43">FHD 中央 4:3</option>
+            <option value="" data-i18n="presetManual">手動</option>
+          </select>
+        </div>
+        <div class="field-row">
+          <div class="field">
+            <label for="resolution" data-i18n="targetResolution">出力解像度</label>
+            <select id="resolution">
+              <option value="" data-i18n="keepResolution">変更しない</option>
+              <option value="0">SD · 640×480</option>
+              <option value="1">HD · 1280×720</option>
+              <option value="2">FHD · 1920×1080</option>
+              <option value="3">4K · 3840×2160</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="targetAspect" data-i18n="targetAspect">出力レイアウト比率</label>
+            <select id="targetAspect">
+              <option value="" data-i18n="keepAspect">検出比率を維持</option>
+              <option value="4:3" data-i18n="center43">4:3</option>
+              <option value="16:9" data-i18n="wide169">16:9</option>
+            </select>
+          </div>
+        </div>
+        <small id="resolutionZeroAspectNote" class="resolution-zero-aspect-note" hidden data-i18n="resolutionZeroAspectNote">For #RESOLUTION,0, the selected layout aspect describes the in-game result. The generator compensates for beatoraja's 16:9 stretch.</small>
+        <fieldset id="aspectProtection" class="aspect-protection">
+          <legend data-i18n="aspectProtection">素材比率を保護</legend>
+          <label class="check-option">
+            <input id="preserveBombAspect" type="checkbox" checked />
+            <span data-i18n="preserveBombAspect">ボム・LN ボム・爆発</span>
+          </label>
+          <label class="check-option">
+            <input id="preserveNowjudgeAspect" type="checkbox" checked />
+            <span data-i18n="preserveNowjudgeAspect">判定文字 NOWJUDGE</span>
+          </label>
+          <label class="check-option">
+            <input id="preserveNowcomboAspect" type="checkbox" checked />
+            <span data-i18n="preserveNowcomboAspect">コンボ数字 NOWCOMBO</span>
+          </label>
+          <small data-i18n="aspectProtectionHelp">位置は換算し、画像自体の横長・縦長化を防ぎます。</small>
+        </fieldset>
+        <div class="field">
+          <label for="liftCoverStrategy" data-i18n="liftStrategy">LIFT カバー</label>
+          <select id="liftCoverStrategy">
+            <option value="copy-sudden" selected data-i18n="copySudden">SUDDEN を複製</option>
+            <option value="transparent" data-i18n="transparentLift">透明</option>
+            <option value="" data-i18n="keepLift">追加しない</option>
+          </select>
+        </div>
+        <div class="actions">
+          <button id="analyzeBtn" type="button" data-i18n="analyze">解析</button>
+          <button id="dryRunBtn" type="button" data-i18n="dryRun">プレビュー</button>
+          <button id="generateBtn" type="button" class="primary" data-i18n="generate">生成</button>
+        </div>
+        <section class="batch-panel" aria-labelledby="batchTitle">
+          <div class="batch-heading">
+            <h3 id="batchTitle" data-i18n="batchQueue">バッチキュー</h3>
+            <span id="batchCount" class="batch-count">0</span>
+          </div>
+          <div class="batch-actions">
+            <button id="addBatchBtn" type="button" data-i18n="addBatch">現在の設定を追加</button>
+            <button id="runBatchBtn" type="button" class="primary" data-i18n="runBatch" disabled>一括生成</button>
+            <button id="clearBatchBtn" type="button" class="icon-button" aria-label="Clear batch" title="Clear batch" disabled>×</button>
+          </div>
+          <div id="batchQueue" hidden>
+            <div id="batchList" class="batch-list"></div>
+          </div>
+        </section>
+      </section>
+
+      <section class="rules-panel" aria-labelledby="productTitle">
+        <header class="app-header">
+          <div>
+            <h1 id="productTitle">Beatoraja Skin Convertor</h1>
+            <span id="runtimeState" class="runtime-state" data-i18n="checkingRuntime">起動確認中</span>
+          </div>
+          <div class="language-control" role="group" aria-label="Language">
+            <button type="button" class="language-button" data-language="ja">日本語</button>
+            <button type="button" class="language-button" data-language="en">English</button>
+          </div>
+        </header>
+        <div id="detectedLayout" class="detected-layout" hidden></div>
+        <div id="ruleList" class="rule-list"></div>
+      </section>
+
+      <section class="output-panel" aria-label="Output">
+        <div class="tabs" role="tablist">
+          <button class="tab active" data-tab="summary" type="button" data-i18n="summary">概要</button>
+          <button class="tab" data-tab="changes" type="button" data-i18n="changes">変更</button>
+          <button class="tab" data-tab="warnings" type="button" data-i18n="warnings">警告</button>
+        </div>
+        <pre id="outputText" class="output-text"></pre>
+      </section>
+    </main>
+    <script type="module" src="./main.js"></script>
+  </body>
+</html>

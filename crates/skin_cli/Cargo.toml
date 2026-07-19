@@ -1,0 +1,22 @@
+[package]
+name = "skin_cli"
+authors.workspace = true
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+version.workspace = true
+
+[[bin]]
+name = "skin-cli"
+path = "src/main.rs"
+
+[dependencies]
+anyhow.workspace = true
+clap.workspace = true
+serde = { workspace = true, features = ["derive"] }
+serde_json.workspace = true
+skin_core = { path = "../skin_core" }
+skin_rules = { path = "../skin_rules" }
+
+[lints]
+workspace = true
