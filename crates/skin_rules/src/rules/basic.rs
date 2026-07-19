@@ -4,8 +4,8 @@ use skin_core::{CsvRecord, SkinFileKind};
 
 use crate::{
     edit::{
-        DST_BLEND_FIELD, DST_OP4_FIELD, find_insert_after_command, insert_lines, is_play_file,
-        replace_line, replace_record, warn,
+        DST_BLEND_FIELD, find_insert_after_command, insert_lines, is_play_file, replace_line,
+        replace_record, warn,
     },
     model::{ConversionOptions, EditableFile, FileChange, RuleContext, RuleWarning},
     path_rewrite::rebase_theme_path_line,
@@ -117,17 +117,6 @@ pub(crate) fn apply_path_rebase(
             );
         }
     }
-}
-
-pub(crate) fn apply_judge_line(files: &mut [EditableFile], changes: &mut Vec<FileChange>) {
-    replace_dst_field(
-        files,
-        "#DST_JUDGELINE",
-        DST_OP4_FIELD,
-        "3",
-        "judge-line-follow",
-        changes,
-    );
 }
 
 pub(crate) fn apply_blend(files: &mut [EditableFile], changes: &mut Vec<FileChange>) {

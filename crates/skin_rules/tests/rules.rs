@@ -141,6 +141,311 @@ fn follow_lift_uses_source_object_ownership() {
 }
 
 #[test]
+fn judge_line_materializes_solid_reference_and_keeps_native_commands() {
+    let root = make_temp_root("judge-line-reference-image");
+    fs::create_dir_all(root.join("Play")).expect("create fixture");
+    fs::write(
+        root.join("Play").join("layout.csv"),
+        concat!(
+            "#SRC_JUDGELINE,0,111,0,0,1,1,1,1,0,0,0,0,0,,,,,,,\r\n",
+            "#DST_JUDGELINE,0,0,44,428,256,0,0,255,255,0,0,1,0,0,0,30,0,0,,0\r\n",
+            "#DST_JUDGELINE,0,30,44,422,256,8,0,255,255,0,0,1,0,0,0,,,,,\r\n",
+            "#SRC_JUDGELINE,1,2,0,0,256,8,1,1,0,0,0,0,0,,,,,,,\r\n",
+            "#DST_JUDGELINE,1,0,340,350,256,8,0,255,255,255,255,1,0,0,0,,,,,\r\n",
+        ),
+    )
+    .expect("write fixture");
+    let output = make_temp_root("judge-line-reference-image-output");
+
+    generate(
+        &root,
+        &output,
+        ConversionOptions {
+            rules: vec!["judge-line-follow".to_owned()],
+            ..ConversionOptions::default()
+        },
+    )
+    .expect("generation should succeed");
+
+    let csv =
+        fs::read_to_string(output.join("Play").join("layout.csv")).expect("read generated CSV");
+    assert!(csv.contains("\\_bms-skin-generator\\judgeline-white.png,,,,,//0"));
+    assert!(csv.contains("#SRC_JUDGELINE,0,0,0,0,1,1,1,1,0,0,0,0,0"));
+    assert!(csv.contains("#DST_JUDGELINE,0,0,44,428,256,0,0,255,255,0,0,1,0,0,0,30,0,0,,0,3"));
+    assert!(csv.contains("#DST_JUDGELINE,0,30,44,422,256,8,0,255,255,0,0,1,0,0,0,,,,,,3"));
+    assert!(csv.contains("#SRC_JUDGELINE,1,2,0,0,256,8,1,1,0,0,0,0,0"));
+    assert!(csv.contains("#DST_JUDGELINE,1,0,340,350,256,8,0,255,255,255,255,1,0,0,0,,,,,,3"));
+    assert!(!csv.contains("#SRC_IMAGE,0,111"));
+
+    let png = fs::read(
+        output
+            .join("_bms-skin-generator")
+            .join("judgeline-white.png"),
+    )
+    .expect("read generated judge-line asset");
+    assert_eq!(&png[..8], b"\x89PNG\r\n\x1a\n");
+    assert_eq!(&png[16..24], &[0, 0, 0, 1, 0, 0, 0, 1]);
+}
+
+#[test]
+fn judge_line_uses_actual_image_count_for_black_and_white_assets() {
+    let root = make_temp_root("judge-line-image-indices");
+    fs::create_dir_all(root.join("Play")).expect("create fixture");
+    fs::write(
+        root.join("Play").join("layout.csv"),
+        concat!(
+            "#IMAGE,LR2files\\Theme\\Source\\first.png,,,,,//0\r\n",
+            "#IMAGE,LR2files\\Theme\\Source\\second.png,,,,,//duplicate-comment\r\n",
+            "#SRC_JUDGELINE,0,111,0,0,1,1,1,1,0,0,0,0,0,,,,,,,\r\n",
+            "#DST_JUDGELINE,0,0,44,428,256,1,0,255,255,255,255,1,0,0,0,,,,,\r\n",
+            "#SRC_JUDGELINE,1,110,0,0,1,1,1,1,0,0,0,0,0,,,,,,,\r\n",
+            "#DST_JUDGELINE,1,0,340,428,256,1,0,255,255,255,255,1,0,0,0,,,,,\r\n",
+        ),
+    )
+    .expect("write fixture");
+    let output = make_temp_root("judge-line-image-indices-output");
+
+    generate(
+        &root,
+        &output,
+        ConversionOptions {
+            rules: vec!["judge-line-follow".to_owned()],
+            ..ConversionOptions::default()
+        },
+    )
+    .expect("generation should succeed");
+
+    let csv =
+        fs::read_to_string(output.join("Play").join("layout.csv")).expect("read generated CSV");
+    assert!(csv.contains("judgeline-black.png,,,,,//2"));
+    assert!(csv.contains("judgeline-white.png,,,,,//3"));
+    assert!(csv.contains("#SRC_JUDGELINE,0,3,"));
+    assert!(csv.contains("#SRC_JUDGELINE,1,2,"));
+    assert!(
+        output
+            .join("_bms-skin-generator")
+            .join("judgeline-black.png")
+            .is_file()
+    );
+    assert!(
+        output
+            .join("_bms-skin-generator")
+            .join("judgeline-white.png")
+            .is_file()
+    );
+}
+
+#[test]
+fn judge_line_dry_run_reports_but_does_not_write_generated_asset() {
+    let root = make_temp_root("judge-line-dry-run");
+    fs::create_dir_all(root.join("Play")).expect("create fixture");
+    fs::write(
+        root.join("Play").join("layout.csv"),
+        concat!(
+            "#SRC_JUDGELINE,0,111,0,0,1,1,1,1,0,0,0,0,0,,,,,,,\r\n",
+            "#DST_JUDGELINE,0,0,44,428,256,1,0,255,255,255,255,1,0,0,0,,,,,\r\n",
+        ),
+    )
+    .expect("write fixture");
+
+    let report = dry_run(
+        &root,
+        ConversionOptions {
+            rules: vec!["judge-line-follow".to_owned()],
+            ..ConversionOptions::default()
+        },
+    )
+    .expect("dry-run should succeed");
+
+    let relative = std::path::Path::new("_bms-skin-generator").join("judgeline-white.png");
+    assert!(report.manifest.changed_files.contains(&relative));
+    assert!(!root.join(relative).exists());
+}
+
+#[test]
+fn judge_line_compat_runs_after_lift_geometry_consumers() {
+    let root = make_temp_root("judge-line-rule-order");
+    fs::create_dir_all(root.join("Play")).expect("create fixture");
+    fs::write(
+        root.join("Play").join("layout.csv"),
+        concat!(
+            "#SRC_JUDGELINE,0,111,0,0,1,1,1,1,0,0,0,0,0,,,,,,,\r\n",
+            "#DST_JUDGELINE,0,0,44,356,256,8,0,255,255,0,0,1,0,0,0,,,,,\r\n",
+            "#SRC_SLIDER,0,5,0,0,256,348,1,1,0,0,0,0,4,348,,,,,,,\r\n",
+            "#DST_SLIDER,0,0,44,0,256,356,0,255,255,255,255,1,0,0,0,0,0,0,0,0,0\r\n",
+            "#SRC_NUMBER,0,9,0,0,70,12,10,1,0,0,14,0,3,,,,,,,\r\n",
+            "#DST_NUMBER,0,0,88,100,10,12,0,255,255,255,255,1,0,0,0,0,0,0,0,0,0\r\n",
+        ),
+    )
+    .expect("write fixture");
+    let output = make_temp_root("judge-line-rule-order-output");
+
+    generate(
+        &root,
+        &output,
+        ConversionOptions {
+            rules: vec![
+                "judge-line-follow".to_owned(),
+                "lift-cover-copy-sudden".to_owned(),
+                "green-number".to_owned(),
+                "lift-number".to_owned(),
+            ],
+            lift_cover_strategy: Some("copy-sudden".to_owned()),
+            ..ConversionOptions::default()
+        },
+    )
+    .expect("generation should succeed");
+
+    let csv =
+        fs::read_to_string(output.join("Play").join("layout.csv")).expect("read generated CSV");
+    assert!(csv.contains("#SRC_JUDGELINE,0,0"));
+    assert!(csv.contains("#DST_JUDGELINE,0,0,44,356,256,8"));
+    assert!(csv.contains("#SRC_LIFT,0,5"));
+    assert!(csv.contains(",313,0,3"));
+    assert!(csv.contains(",314,0,3"));
+}
+
+#[test]
+fn key_laser_layer_registers_beams_before_notes_without_moving_other_images() {
+    let root = make_temp_root("key-laser-layer");
+    fs::create_dir_all(root.join("_csv")).expect("create fixture");
+    fs::write(
+        root.join("_csv").join("layout.csv"),
+        concat!(
+            "#SRC_NOTE,0,1,0,0,32,16,1,1,0,0,0,0,0\r\n",
+            "#IF,935\r\n",
+            "#DST_NOTE,0,0,10,300,32,16,0,255,255,255,255,0,0,0,0,0,0,0,0,0\r\n",
+            "#ENDIF\r\n",
+            "#SRC_IMAGE,0,2,0,0,32,256,1,1,0,100,0,0,0\r\n",
+            "#DST_IMAGE,0,0,10,316,32,-256,0,255,255,255,255,1,0,0,0,0,100,0,0,0,3\r\n",
+            "#SRC_IMAGE,0,2,32,0,32,256,1,1,0,120,0,0,0\r\n",
+            "#DST_IMAGE,0,0,10,316,32,-256,0,255,255,255,255,1,0,0,0,0,120,0,0,0,3\r\n",
+            "#SRC_IMAGE,0,3,0,0,64,64,1,1,0,0,0,0,0\r\n",
+            "#DST_IMAGE,0,0,100,100,64,64,0,255,255,255,255,1,0,0,0,0,0,0,0,0\r\n",
+        ),
+    )
+    .expect("write fixture");
+    let output = make_temp_root("key-laser-layer-output");
+
+    let report = generate(
+        &root,
+        &output,
+        ConversionOptions {
+            rules: vec!["key-laser-layer-compat".to_owned()],
+            ..ConversionOptions::default()
+        },
+    )
+    .expect("generation should succeed");
+
+    assert!(report.warnings.is_empty());
+    assert_eq!(
+        report
+            .changes
+            .iter()
+            .filter(|change| change.rule_id == "key-laser-layer-compat")
+            .count(),
+        1
+    );
+    let csv =
+        fs::read_to_string(output.join("_csv").join("layout.csv")).expect("read generated CSV");
+    let note_source = csv.find("#SRC_NOTE").expect("note source");
+    let laser_on = csv.find("#SRC_IMAGE,0,2,0,0,32,256").expect("laser on");
+    let laser_off = csv.find("#SRC_IMAGE,0,2,32,0,32,256").expect("laser off");
+    let note_condition = csv.find("#IF,935").expect("note condition");
+    let note_destination = csv.find("#DST_NOTE").expect("note destination");
+    let unrelated = csv
+        .find("#SRC_IMAGE,0,3,0,0,64,64")
+        .expect("unrelated image");
+    assert!(note_source < laser_on);
+    assert!(laser_on < laser_off);
+    assert!(laser_off < note_condition);
+    assert!(note_condition < note_destination);
+    assert!(note_destination < unrelated);
+}
+
+#[test]
+fn key_laser_layer_moves_pure_conditional_blocks_intact() {
+    let root = make_temp_root("conditional-key-laser-layer");
+    fs::create_dir_all(root.join("_csv")).expect("create fixture");
+    fs::write(
+        root.join("_csv").join("layout.csv"),
+        concat!(
+            "#SRC_NOTE,0,1,0,0,32,16,1,1,0,0,0,0,0\r\n",
+            "#DST_NOTE,0,0,10,300,32,16,0,255,255,255,255,0,0,0,0,0,0,0,0,0\r\n",
+            "#IF,901,920\r\n",
+            "#SRC_IMAGE,0,2,0,0,32,222,1,1,0,100,0,0,0\r\n",
+            "#DST_IMAGE,0,0,10,300,32,-222,0,255,255,255,255,1,0,0,0,0,100,0,0,0\r\n",
+            "#SRC_IMAGE,0,2,32,0,32,222,1,1,0,101,0,0,0\r\n",
+            "#DST_IMAGE,0,0,42,300,32,-222,0,255,255,255,255,1,0,0,0,0,101,0,0,0\r\n",
+            "#ENDIF\r\n",
+        ),
+    )
+    .expect("write fixture");
+    let output = make_temp_root("conditional-key-laser-layer-output");
+
+    let report = generate(
+        &root,
+        &output,
+        ConversionOptions {
+            rules: vec!["key-laser-layer-compat".to_owned()],
+            ..ConversionOptions::default()
+        },
+    )
+    .expect("generation should succeed");
+
+    assert!(report.warnings.is_empty());
+    let csv =
+        fs::read_to_string(output.join("_csv").join("layout.csv")).expect("read generated CSV");
+    let condition = csv.find("#IF,901,920").expect("laser condition");
+    let condition_end = csv.find("#ENDIF").expect("laser condition end");
+    let note_destination = csv.find("#DST_NOTE").expect("note destination");
+    assert!(condition < condition_end);
+    assert!(condition_end < note_destination);
+}
+
+#[test]
+fn key_laser_layer_leaves_mixed_conditional_blocks_unchanged() {
+    let root = make_temp_root("mixed-key-laser-layer");
+    fs::create_dir_all(root.join("_csv")).expect("create fixture");
+    let original = concat!(
+        "#SRC_NOTE,0,1,0,0,32,16,1,1,0,0,0,0,0\r\n",
+        "#DST_NOTE,0,0,10,300,32,16,0,255,255,255,255,0,0,0,0,0,0,0,0,0\r\n",
+        "#IF,900\r\n",
+        "#IF,901\r\n",
+        "#SRC_IMAGE,0,2,0,0,32,222,1,1,0,100,0,0,0\r\n",
+        "#DST_IMAGE,0,0,10,300,32,-222,0,255,255,255,255,1,0,0,0,0,100,0,0,0\r\n",
+        "#ENDIF\r\n",
+        "#SRC_IMAGE,0,3,0,0,64,64,1,1,0,0,0,0,0\r\n",
+        "#DST_IMAGE,0,0,100,100,64,64,0,255,255,255,255,1,0,0,0,0,0,0,0,0\r\n",
+        "#ENDIF\r\n",
+    );
+    fs::write(root.join("_csv").join("layout.csv"), original).expect("write fixture");
+    let output = make_temp_root("mixed-key-laser-layer-output");
+
+    let report = generate(
+        &root,
+        &output,
+        ConversionOptions {
+            rules: vec!["key-laser-layer-compat".to_owned()],
+            ..ConversionOptions::default()
+        },
+    )
+    .expect("generation should succeed");
+
+    assert!(report.changes.is_empty());
+    assert!(
+        report
+            .warnings
+            .iter()
+            .any(|warning| warning.rule_id == "key-laser-layer-compat")
+    );
+    assert_eq!(
+        fs::read(output.join("_csv").join("layout.csv")).expect("read generated CSV"),
+        original.as_bytes()
+    );
+}
+
+#[test]
 fn copy_sudden_lift_and_numbers_match_judgment_geometry() {
     let root = make_temp_root("oadx-modules");
     write_oadx_layout(&root);

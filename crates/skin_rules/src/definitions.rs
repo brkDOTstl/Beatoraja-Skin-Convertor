@@ -47,12 +47,20 @@ pub fn all_rule_definitions() -> Vec<RuleDefinition> {
             "Move bomb, hold, tall laser, and rhythm-pulse object groups with LIFT.",
         ),
         rule(
+            "key-laser-layer-compat",
+            "compatibility",
+            "Key laser behind notes",
+            Confidence::SafeAuto,
+            true,
+            "Preserve LR2 note visibility by registering tall key-laser groups before beatoraja creates the note renderer.",
+        ),
+        rule(
             "judge-line-follow",
             "lift",
             "Judge line follows LIFT",
             Confidence::SafeAuto,
             true,
-            "Set op4=3 on all #DST_JUDGELINE animation frames.",
+            "Materialize LR2 black/white references as standalone 1x1 assets, preserve native judge-line rendering, and move every frame with LIFT.",
         ),
         rule(
             "lift-cover-transparent",
@@ -92,7 +100,7 @@ pub fn all_rule_definitions() -> Vec<RuleDefinition> {
             "Resolution and aspect conversion",
             Confidence::RecommendedConfirm,
             false,
-            "Scale coordinates to a target resolution and 4:3 or 16:9 layout with optional gameplay-material aspect protection.",
+            "Scale coordinates to a target resolution and 4:3 or 16:9 layout, preserve symmetric play-field margins, and optionally protect gameplay-material aspect ratios.",
         ),
         rule(
             "blend-fallback",
@@ -129,6 +137,7 @@ pub fn preset_rule_ids(preset: &str) -> Vec<String> {
         "theme-path-rebase",
         "asset-reference-repair",
         "follow-lift-op4",
+        "key-laser-layer-compat",
         "judge-line-follow",
         "blend-fallback",
     ];

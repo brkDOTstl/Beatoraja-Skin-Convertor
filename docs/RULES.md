@@ -17,7 +17,13 @@ Implemented rules:
 - `asset-reference-repair`: clear missing thumbnails, remove unused missing fonts, and repair movie
   extensions while recognizing assets packed in DXA archives.
 - `follow-lift-op4`: apply `op4=3` to complete bomb, LN, tall laser, and rhythm-pulse source groups.
-- `judge-line-follow`: apply `op4=3` to every judge-line animation frame.
+- `key-laser-layer-compat`: preserve LR2's visual layering in beatoraja by moving complete tall
+  key-laser groups before the first note-renderer registration point. Pure key-laser `#IF` blocks
+  move intact; mixed conditional blocks are reported and left unchanged.
+- `judge-line-follow`: materialize LR2's solid black/white references (`gr=110/111`) as standalone
+  1x1 PNG assets because beatoraja's dedicated judge-line loader does not resolve those references.
+  Keep native `SRC_JUDGELINE` / `DST_JUDGELINE` rendering and original geometry, then apply `op4=3`
+  to every frame. Other system references retain the normal-image compatibility fallback.
 - `lift-cover-copy-sudden`: pair SUDDEN sliders with judgment sides and start the LIFT drawing at
   the lower edge of the original judgment line.
 - `lift-cover-transparent`: add functional invisible LIFT objects for sparse play-field layouts.
@@ -31,6 +37,9 @@ Implemented rules:
   unchanged instead of being treated as generic rectangles.
   For `#RESOLUTION,0` output, 4:3 uses a centered 480x480 logical area to counter beatoraja's
   horizontal stretch, while 16:9 keeps the full 640x480 logical canvas unchanged.
+  When a play-field rectangle encloses a judgment area with equal left and right margins, those
+  margins are scaled and rounded as one relationship. This prevents an unavoidable fractional
+  edge from making one side one pixel narrower than the other.
 
 Explicit target resolution selects both `resolution-declaration` and `aspect-ratio-convert` in every
 entry point. Explicit target aspect selects `aspect-ratio-convert`, including CLI and batch jobs.

@@ -5,15 +5,17 @@ use skin_core::{AnalysisReport, analyze_path};
 use crate::{
     definitions::{all_rule_definitions, preset_rule_ids},
     error::{RuleError, RuleResult},
-    model::{ConversionOptions, ConversionReport, FileChange, RuleContext, RuleWarning},
+    model::{
+        ConversionOptions, ConversionReport, FileChange, GeneratedAsset, RuleContext, RuleWarning,
+    },
     rules::{
-        aspect, basic, follow_lift, lift_cover,
+        aspect, basic, follow_lift, judge_line, key_laser_layer, lift_cover,
         numbers::{self, NumberKind},
     },
     theme::{detect_internal_theme, theme_dir_name},
     workspace::{
         build_manifest, copy_dir_recursive, load_editable_files, validate_output_path,
-        write_dirty_files,
+        write_dirty_files, write_generated_assets,
     },
 };
 
@@ -26,8 +28,17 @@ pub fn dry_run(
     let mut files = load_editable_files(input)?;
     let selected_rules = resolve_rule_ids(&options);
     let context = context_from(input, input, &analysis, &files);
-    let (changes, warnings) = apply_rules(&mut files, &selected_rules, &context, &options);
-    let manifest = build_manifest(input, None, &options, &selected_rules, &files, &warnings)?;
+    let (changes, warnings, generated_assets) =
+        apply_rules(&mut files, &selected_rules, &context, &options);
+    let manifest = build_manifest(
+        input,
+        None,
+        &options,
+        &selected_rules,
+        &files,
+        &generated_assets,
+        &warnings,
+    )?;
     Ok(ConversionReport {
         analysis,
         selected_rules,
@@ -50,14 +61,17 @@ pub fn generate(
     let mut files = load_editable_files(output)?;
     let selected_rules = resolve_rule_ids(&options);
     let context = context_from(input, output, &analysis, &files);
-    let (changes, warnings) = apply_rules(&mut files, &selected_rules, &context, &options);
+    let (changes, warnings, generated_assets) =
+        apply_rules(&mut files, &selected_rules, &context, &options);
     write_dirty_files(output, &files)?;
+    write_generated_assets(output, &generated_assets)?;
     let manifest = build_manifest(
         input,
         Some(output),
         &options,
         &selected_rules,
         &files,
+        &generated_assets,
         &warnings,
     )?;
     let manifest_path = output.join("bms-skin-generator-manifest.json");
@@ -78,9 +92,10 @@ fn apply_rules(
     selected_rules: &[String],
     context: &RuleContext,
     options: &ConversionOptions,
-) -> (Vec<FileChange>, Vec<RuleWarning>) {
+) -> (Vec<FileChange>, Vec<RuleWarning>, Vec<GeneratedAsset>) {
     let mut changes = Vec::new();
     let mut warnings = Vec::new();
+    let mut generated_assets = Vec::new();
     let selected = selected_rules
         .iter()
         .map(String::as_str)
@@ -101,7 +116,16 @@ fn apply_rules(
                 crate::rules::asset_repair::apply(files, context, &mut changes, &mut warnings);
             }
             "follow-lift-op4" => follow_lift::apply(files, &mut changes),
-            "judge-line-follow" => basic::apply_judge_line(files, &mut changes),
+            "key-laser-layer-compat" => {
+                key_laser_layer::apply(files, &mut changes, &mut warnings);
+            }
+            "judge-line-follow" => judge_line::apply(
+                files,
+                context,
+                &mut generated_assets,
+                &mut changes,
+                &mut warnings,
+            ),
             "blend-fallback" => basic::apply_blend(files, &mut changes),
             "lift-cover-transparent" => {
                 lift_cover::apply_transparent(files, &mut changes, &mut warnings);
@@ -145,7 +169,7 @@ fn apply_rules(
             message: "Unknown rule id; skipped.".to_owned(),
         });
     }
-    (changes, warnings)
+    (changes, warnings, generated_assets)
 }
 
 fn resolve_rule_ids(options: &ConversionOptions) -> Vec<String> {
@@ -213,12 +237,13 @@ const RULE_ORDER: &[&str] = &[
     "theme-path-rebase",
     "asset-reference-repair",
     "follow-lift-op4",
-    "judge-line-follow",
+    "key-laser-layer-compat",
     "blend-fallback",
     "lift-cover-transparent",
     "lift-cover-copy-sudden",
     "green-number",
     "lift-number",
+    "judge-line-follow",
     "aspect-ratio-convert",
     "key-laser-rewrite",
     "gauge-label-helper",

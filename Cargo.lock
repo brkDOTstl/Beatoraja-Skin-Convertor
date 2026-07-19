@@ -321,7 +321,7 @@ checksum = "72b3254f16251a8381aa12e40e3c4d2f0199f8c6508fbecb9d91f575e0fbb8c6"
 
 [[package]]
 name = "beatoraja_skin_convertor"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "rfd",
  "serde",
@@ -3255,7 +3255,7 @@ checksum = "8ee5873ec9cce0195efcb7a4e9507a04cd49aec9c83d0389df45b1ef7ba2e649"
 
 [[package]]
 name = "skin_cli"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "anyhow",
  "clap",
@@ -3267,7 +3267,7 @@ dependencies = [
 
 [[package]]
 name = "skin_core"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "serde",
  "thiserror 2.0.18",
@@ -3275,7 +3275,7 @@ dependencies = [
 
 [[package]]
 name = "skin_rules"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "serde",
  "serde_json",

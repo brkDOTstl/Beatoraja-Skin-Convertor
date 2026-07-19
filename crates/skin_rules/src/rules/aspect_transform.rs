@@ -5,6 +5,13 @@ use super::{
     aspect_schema::{Axis, DestinationGeometry},
 };
 
+#[derive(Debug, Clone, Copy)]
+pub(super) struct SymmetricHorizontalFrame {
+    pub(super) inner_x: i32,
+    pub(super) inner_width: i32,
+    pub(super) margin: i32,
+}
+
 pub(super) fn transform_geometry(
     record: &mut CsvRecord,
     transform: LayoutTransform,
@@ -54,6 +61,50 @@ pub(super) fn scale(value: i32, numerator: i32, denominator: i32) -> i32 {
         return value;
     }
     let scaled = (i64::from(value) * i64::from(numerator)).div_euclid(i64::from(denominator));
+    scaled.clamp(i64::from(i32::MIN), i64::from(i32::MAX)) as i32
+}
+
+pub(super) fn preserve_symmetric_horizontal_frame(
+    record: &mut CsvRecord,
+    transform: LayoutTransform,
+    [x_field, _, width_field, _]: [usize; 4],
+    apply_offset: bool,
+    frame: SymmetricHorizontalFrame,
+) -> bool {
+    let offset = if apply_offset { transform.target.x } else { 0 };
+    let inner_left = scale(
+        frame.inner_x,
+        transform.target.width,
+        transform.source_width,
+    )
+    .saturating_add(offset);
+    let inner_right = scale(
+        frame.inner_x.saturating_add(frame.inner_width),
+        transform.target.width,
+        transform.source_width,
+    )
+    .saturating_add(offset);
+    let margin = scale_nearest(frame.margin, transform.target.width, transform.source_width);
+    let target_x = inner_left.saturating_sub(margin);
+    let target_width = inner_right
+        .saturating_sub(inner_left)
+        .saturating_add(margin.saturating_mul(2));
+    if record.field_i32(x_field) == Some(target_x)
+        && record.field_i32(width_field) == Some(target_width)
+    {
+        return false;
+    }
+    record.set_field_ascii(x_field, &target_x.to_string());
+    record.set_field_ascii(width_field, &target_width.to_string());
+    true
+}
+
+fn scale_nearest(value: i32, numerator: i32, denominator: i32) -> i32 {
+    if denominator <= 0 || value < 0 || numerator < 0 {
+        return scale(value, numerator, denominator);
+    }
+    let product = i64::from(value) * i64::from(numerator);
+    let scaled = (product + i64::from(denominator) / 2).div_euclid(i64::from(denominator));
     scaled.clamp(i64::from(i32::MIN), i64::from(i32::MAX)) as i32
 }
 

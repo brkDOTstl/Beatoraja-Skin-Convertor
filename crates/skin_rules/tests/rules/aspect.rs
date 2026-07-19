@@ -102,6 +102,57 @@ fn resolution_zero_compensates_beatoraja_stretch_for_four_three_output() {
 }
 
 #[test]
+fn symmetric_playfield_frame_keeps_equal_margins_after_fractional_scaling() {
+    let root = fixture(
+        "aspect-symmetric-playfield-frame-source",
+        0,
+        concat!(
+            "#SRC_IMAGE,0,0,0,0,260,428,1,1,0,0,0,0,0\r\n",
+            "#DST_IMAGE,0,0,42,0,260,428,0,255,255,255,255,1,0,0,0,0,0,0,0,0,0\r\n",
+            "#SRC_JUDGELINE,0,0,0,0,1,1,1,1,0,0,0,0,0\r\n",
+            "#DST_JUDGELINE,0,0,44,422,256,8,0,255,255,255,255,1,0,0,0,0,0,0,0,0,0\r\n",
+        )
+        .as_bytes(),
+    );
+    let csv = convert(
+        &root,
+        "aspect-symmetric-playfield-frame-output",
+        ConversionOptions {
+            target_aspect: Some(TargetAspect::FourThree),
+            ..ConversionOptions::default()
+        },
+    );
+
+    assert!(csv.contains("#DST_IMAGE,0,0,111,0,196,428,"));
+    assert!(csv.contains("#DST_JUDGELINE,0,0,113,422,192,8,"));
+}
+
+#[test]
+fn asymmetric_playfield_frame_keeps_regular_edge_scaling() {
+    let root = fixture(
+        "aspect-asymmetric-playfield-frame-source",
+        0,
+        concat!(
+            "#SRC_IMAGE,0,0,0,0,259,428,1,1,0,0,0,0,0\r\n",
+            "#DST_IMAGE,0,0,42,0,259,428,0,255,255,255,255,1,0,0,0,0,0,0,0,0,0\r\n",
+            "#SRC_JUDGELINE,0,0,0,0,1,1,1,1,0,0,0,0,0\r\n",
+            "#DST_JUDGELINE,0,0,44,422,256,8,0,255,255,255,255,1,0,0,0,0,0,0,0,0,0\r\n",
+        )
+        .as_bytes(),
+    );
+    let csv = convert(
+        &root,
+        "aspect-asymmetric-playfield-frame-output",
+        ConversionOptions {
+            target_aspect: Some(TargetAspect::FourThree),
+            ..ConversionOptions::default()
+        },
+    );
+
+    assert!(csv.contains("#DST_IMAGE,0,0,111,0,194,428,"));
+}
+
+#[test]
 fn resolution_zero_uses_full_logical_canvas_for_sixteen_nine_output() {
     let root = fixture(
         "aspect-resolution-zero-sixteen-nine-source",

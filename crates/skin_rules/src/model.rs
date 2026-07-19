@@ -137,6 +137,11 @@ pub(crate) struct EditableFile {
     pub dirty: bool,
 }
 
+pub(crate) struct GeneratedAsset {
+    pub relative_path: PathBuf,
+    pub bytes: Vec<u8>,
+}
+
 #[derive(Debug, Clone)]
 pub(crate) struct RuleContext {
     pub output_root: PathBuf,

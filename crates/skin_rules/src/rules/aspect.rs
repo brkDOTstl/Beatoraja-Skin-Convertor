@@ -1,11 +1,19 @@
+use std::collections::BTreeMap;
+
 use skin_core::{CsvRecord, FollowLiftKind, canvas_for_resolution, follow_lift_kind};
 
 use crate::{
-    edit::{replace_record, warn},
+    edit::{is_play_file, replace_record, warn},
     model::{ConversionOptions, EditableFile, FileChange, RuleContext, RuleWarning},
     rules::{
-        aspect_schema::{destination_geometry, slider_range_axis, source_dimensions},
-        aspect_transform::{scale, transform_geometry, transform_source_dimensions},
+        aspect_schema::{
+            DestinationGeometry, destination_geometry, slider_range_axis, source_dimensions,
+        },
+        aspect_transform::{
+            SymmetricHorizontalFrame, preserve_symmetric_horizontal_frame, scale,
+            transform_geometry, transform_source_dimensions,
+        },
+        geometry::judgment_geometries,
     },
 };
 
@@ -27,6 +35,7 @@ pub(crate) fn apply(
     };
 
     for file in files {
+        let symmetric_frames = symmetric_horizontal_frames(file);
         let mut bomb_group = false;
         for index in 0..file.document.line_count() {
             let Some(content) = file.document.line_content(index).map(Vec::from) else {
@@ -42,14 +51,28 @@ pub(crate) fn apply(
             let changed = if let Some(geometry) = destination_geometry(&command) {
                 let preserve =
                     transform.aspect_changed && preserve_aspect(&command, bomb_group, options);
-                transform_geometry(
+                let apply_offset = !offset_excluded(&command);
+                let mut changed = transform_geometry(
                     &mut record,
                     transform,
                     geometry,
-                    !offset_excluded(&command),
+                    apply_offset,
                     preserve,
                     preserve && command.contains("NOWCOMBO"),
-                )
+                );
+                if !preserve
+                    && let DestinationGeometry::Rectangle(fields) = geometry
+                    && let Some(frame) = symmetric_frames.get(&index)
+                {
+                    changed = preserve_symmetric_horizontal_frame(
+                        &mut record,
+                        transform,
+                        fields,
+                        apply_offset,
+                        *frame,
+                    ) || changed;
+                }
+                changed
             } else if command == "#SRC_SLIDER" {
                 slider_range_axis(&record).is_some_and(|axis| {
                     transform_source_dimensions(&mut record, transform, &[(12, axis)])
@@ -70,6 +93,60 @@ pub(crate) fn apply(
             }
         }
     }
+}
+
+fn symmetric_horizontal_frames(file: &EditableFile) -> BTreeMap<usize, SymmetricHorizontalFrame> {
+    let mut frames = BTreeMap::new();
+    if !is_play_file(file) {
+        return frames;
+    }
+    let judgments = judgment_geometries(&file.document);
+    if judgments.is_empty() {
+        return frames;
+    }
+
+    for index in 0..file.document.line_count() {
+        let Some(content) = file.document.line_content(index) else {
+            continue;
+        };
+        let record = CsvRecord::from_line(index, content);
+        let Some(command) = record.command() else {
+            continue;
+        };
+        let Some(DestinationGeometry::Rectangle([x_field, _, width_field, _])) =
+            destination_geometry(&command)
+        else {
+            continue;
+        };
+        let (Some(x), Some(width)) = (record.field_i32(x_field), record.field_i32(width_field))
+        else {
+            continue;
+        };
+        if width <= 0 {
+            continue;
+        }
+        let rectangle_right = i64::from(x) + i64::from(width);
+        let Some(frame) = judgments
+            .iter()
+            .filter_map(|judgment| {
+                let judgment_right = i64::from(judgment.x) + i64::from(judgment.width);
+                let left_margin = i64::from(judgment.x) - i64::from(x);
+                let right_margin = rectangle_right - judgment_right;
+                (left_margin > 0 && left_margin == right_margin).then_some(
+                    SymmetricHorizontalFrame {
+                        inner_x: judgment.x,
+                        inner_width: judgment.width,
+                        margin: left_margin.clamp(0, i64::from(i32::MAX)) as i32,
+                    },
+                )
+            })
+            .min_by_key(|frame| frame.margin)
+        else {
+            continue;
+        };
+        frames.insert(index, frame);
+    }
+    frames
 }
 
 #[derive(Debug, Clone, Copy)]

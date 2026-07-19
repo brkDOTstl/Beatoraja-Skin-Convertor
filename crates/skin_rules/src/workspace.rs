@@ -9,7 +9,7 @@ use skin_core::read_skin_files;
 
 use crate::{
     error::{RuleError, RuleResult},
-    model::{ConversionOptions, EditableFile, OutputManifest, RuleWarning},
+    model::{ConversionOptions, EditableFile, GeneratedAsset, OutputManifest, RuleWarning},
 };
 
 pub(crate) fn load_editable_files(root: &Path) -> RuleResult<Vec<EditableFile>> {
@@ -32,12 +32,25 @@ pub(crate) fn write_dirty_files(root: &Path, files: &[EditableFile]) -> RuleResu
     Ok(())
 }
 
+pub(crate) fn write_generated_assets(root: &Path, assets: &[GeneratedAsset]) -> RuleResult<()> {
+    for asset in assets {
+        let path = root.join(&asset.relative_path);
+        if let Some(parent) = path.parent() {
+            fs::create_dir_all(parent)
+                .map_err(|source| RuleError::io(parent.to_path_buf(), source))?;
+        }
+        fs::write(&path, &asset.bytes).map_err(|source| RuleError::io(path, source))?;
+    }
+    Ok(())
+}
+
 pub(crate) fn build_manifest(
     input: &Path,
     output: Option<&Path>,
     options: &ConversionOptions,
     selected_rules: &[String],
     files: &[EditableFile],
+    generated_assets: &[GeneratedAsset],
     warnings: &[RuleWarning],
 ) -> RuleResult<OutputManifest> {
     let generated_at_unix = SystemTime::now()
@@ -55,6 +68,11 @@ pub(crate) fn build_manifest(
             .iter()
             .filter(|file| file.dirty)
             .map(|file| file.relative_path.clone())
+            .chain(
+                generated_assets
+                    .iter()
+                    .map(|asset| asset.relative_path.clone()),
+            )
             .collect(),
         warnings: warnings.to_vec(),
     })

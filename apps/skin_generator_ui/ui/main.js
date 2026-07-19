@@ -5,10 +5,10 @@ import { createBatchController, validateGenerationPaths } from "./batch.js";
 const invoke = window.__TAURI__?.core?.invoke;
 const $ = (id) => document.getElementById(id);
 const presetRules = {
-  "safe-auto": ["resolution-declaration", "theme-path-rebase", "asset-reference-repair", "follow-lift-op4", "judge-line-follow", "blend-fallback"],
-  "visible-lift": ["resolution-declaration", "theme-path-rebase", "asset-reference-repair", "follow-lift-op4", "judge-line-follow", "blend-fallback", "lift-cover-copy-sudden", "green-number", "lift-number"],
-  "transparent-lift": ["resolution-declaration", "theme-path-rebase", "asset-reference-repair", "follow-lift-op4", "judge-line-follow", "blend-fallback", "lift-cover-transparent", "green-number", "lift-number"],
-  "fhd-4x3": ["resolution-declaration", "theme-path-rebase", "asset-reference-repair", "follow-lift-op4", "judge-line-follow", "blend-fallback", "aspect-ratio-convert"],
+  "safe-auto": ["resolution-declaration", "theme-path-rebase", "asset-reference-repair", "follow-lift-op4", "key-laser-layer-compat", "judge-line-follow", "blend-fallback"],
+  "visible-lift": ["resolution-declaration", "theme-path-rebase", "asset-reference-repair", "follow-lift-op4", "key-laser-layer-compat", "judge-line-follow", "blend-fallback", "lift-cover-copy-sudden", "green-number", "lift-number"],
+  "transparent-lift": ["resolution-declaration", "theme-path-rebase", "asset-reference-repair", "follow-lift-op4", "key-laser-layer-compat", "judge-line-follow", "blend-fallback", "lift-cover-transparent", "green-number", "lift-number"],
+  "fhd-4x3": ["resolution-declaration", "theme-path-rebase", "asset-reference-repair", "follow-lift-op4", "key-laser-layer-compat", "judge-line-follow", "blend-fallback", "aspect-ratio-convert"],
 };
 
 const state = {
@@ -270,6 +270,7 @@ function fallbackRules() {
     ["theme-path-rebase", "base", "safe_auto", true],
     ["asset-reference-repair", "base", "recommended_confirm", true],
     ["follow-lift-op4", "lift", "safe_auto", true],
+    ["key-laser-layer-compat", "compatibility", "safe_auto", true],
     ["judge-line-follow", "lift", "safe_auto", true],
     ["lift-cover-transparent", "lift", "recommended_confirm", true],
     ["lift-cover-copy-sudden", "lift", "recommended_confirm", true],

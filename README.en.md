@@ -57,6 +57,8 @@ For `#RESOLUTION,0` output, beatoraja horizontally stretches the 640x480 logical
 The converter therefore treats the selected layout aspect as the intended in-game aspect: 4:3
 output is centered in a 480x480 logical area before rendering, while 16:9 output uses the full
 640x480 logical canvas. This adjustment runs when a target layout aspect is selected.
+Play-field frames that enclose a judgment area with equal left and right margins are rounded as a
+single relationship, preventing fractional scaling from making one side one pixel narrower.
 
 Batch job shape:
 
