@@ -64,7 +64,12 @@ function formatBatchResults(results, t) {
       `  -> ${result.output}`,
     );
     if (result.ok) {
+      const resolution = result.applied_resolution == null
+        ? t("keepResolution")
+        : `#RESOLUTION,${result.applied_resolution}`;
+      const aspect = result.applied_target_aspect || t("keepAspect");
       lines.push(
+        `  ${t("appliedLayout")}: ${resolution} / ${aspect}`,
         `  ${t("changedFiles")}: ${result.changed_files}, ${t("warningCount")}: ${result.warnings}`,
       );
     } else {

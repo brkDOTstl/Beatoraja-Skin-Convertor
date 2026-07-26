@@ -71,6 +71,7 @@ const en = {
   changedFiles: "Changed files",
   changeCount: "Changes",
   warningCount: "Warnings",
+  appliedLayout: "Applied layout",
   output: "Output",
   dryRunOutput: "dry-run",
   applied: "Applied",
@@ -96,6 +97,7 @@ const en = {
   warning_no_play_csv: "No structurally valid Play CSV files were detected.",
   warning_missing_lift_number: "No beatoraja LIFT number num=314 was detected.",
   warning_aspect_ratio_convert: "Skipped because the source or target layout could not be resolved.",
+  warning_lr2_dark_mode: "DARK mode could not be added to one or more Play routes.",
 };
 
 const ja = {
@@ -171,6 +173,7 @@ const ja = {
   changedFiles: "変更ファイル",
   changeCount: "変更数",
   warningCount: "警告数",
+  appliedLayout: "適用レイアウト",
   output: "出力",
   dryRunOutput: "プレビュー",
   applied: "適用",
@@ -203,6 +206,7 @@ const ja = {
   warning_green_number: "グリーンナンバーの複製元を安全に対応付けできませんでした。",
   warning_lift_number: "LIFT ナンバーの複製元を安全に対応付けできませんでした。",
   warning_aspect_ratio_convert: "変換元または出力先のレイアウトを判定できないため処理をスキップしました。",
+  warning_lr2_dark_mode: "一部のプレイルートへ DARK モードを追加できませんでした。",
   warning_key_laser_rewrite: "スキン固有の素材マッピングが必要です。",
   warning_gauge_label_helper: "スキン固有の素材マッピングが必要です。",
   warning_lift_cover_custom_image: "スキン固有の素材マッピングが必要です。",
@@ -224,6 +228,7 @@ export const ruleText = {
     "lift-number": ["LIFT number", "Clone complete lane-cover number groups as num=314."],
     "aspect-ratio-convert": ["Resolution and aspect conversion", "Scale coordinates to the selected layout while preserving symmetric play-field margins."],
     "blend-fallback": ["Blend fallback", "Convert LR2-only blend=5 frames and disable duplicate option-label fades that darken in beatoraja."],
+    "lr2-dark-mode": ["LR2 DARK MODE", "Add selectable OFF, DARK, and DARK2 CSV variants. DARK2 keeps lane covers as opaque black boards."],
     "key-laser-rewrite": ["Key laser asset rewrite", "Requires a skin-specific sprite and animation mapping."],
     "gauge-label-helper": ["Gauge label asset helper", "Requires a skin-specific gauge-label order mapping."],
     "lift-cover-custom-image": ["Custom LIFT cover image", "Requires an explicitly selected image source."],
@@ -241,6 +246,7 @@ export const ruleText = {
     "lift-number": ["LIFT ナンバー", "レーンカバー数値の全フレームを num=314 として複製します。"],
     "aspect-ratio-convert": ["解像度・比率変換", "座標を選択したレイアウトへ変換し、プレイ領域外枠の左右対称な余白を維持します。"],
     "blend-fallback": ["ブレンド互換", "LR2 専用 blend=5 を blend=2 に変換し、beatoraja で暗転する重複オプションラベルのフェードを無効化します。"],
+    "lr2-dark-mode": ["LR2 DARK MODE", "OFF・DARK・DARK2 を選べる CSV を生成し、DARK2 のレーンカバーは不透明な黒板として維持します。"],
     "key-laser-rewrite": ["キーレーザー素材再構成", "スキン固有のスプライトとアニメーション対応が必要です。"],
     "gauge-label-helper": ["ゲージラベル素材補助", "スキン固有のゲージラベル順対応が必要です。"],
     "lift-cover-custom-image": ["任意画像 LIFT カバー", "明示的な画像素材と切り出し指定が必要です。"],

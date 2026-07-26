@@ -46,6 +46,10 @@ pub(super) fn source_dimensions(command: &str) -> &'static [(usize, Axis)] {
     }
 }
 
+pub(super) fn source_vertical_cutoff(command: &str) -> Option<usize> {
+    matches!(command, "#SRC_HIDDEN" | "#SRC_LIFT").then_some(11)
+}
+
 pub(super) fn slider_range_axis(record: &CsvRecord) -> Option<Axis> {
     match record.field_i32(11)? {
         0 | 2 => Some(Axis::Vertical),

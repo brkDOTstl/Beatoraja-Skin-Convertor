@@ -4,12 +4,13 @@ use skin_core::{AnalysisReport, analyze_path};
 
 use crate::{
     definitions::{all_rule_definitions, preset_rule_ids},
+    dxa,
     error::{RuleError, RuleResult},
     model::{
         ConversionOptions, ConversionReport, FileChange, GeneratedAsset, RuleContext, RuleWarning,
     },
     rules::{
-        aspect, basic, follow_lift, judge_line, key_laser_layer, lift_cover,
+        aspect, basic, dark_mode, follow_lift, judge_line, key_laser_layer, lift_cover,
         numbers::{self, NumberKind},
     },
     theme::{detect_internal_theme, theme_dir_name},
@@ -37,6 +38,7 @@ pub fn dry_run(
         &selected_rules,
         &files,
         &generated_assets,
+        &[],
         &warnings,
     )?;
     Ok(ConversionReport {
@@ -58,11 +60,14 @@ pub fn generate(
     validate_output_path(input, output)?;
     let analysis = analyze_path(input)?;
     copy_dir_recursive(input, output)?;
+    let dxa_report = dxa::unpack_archives(output)?;
     let mut files = load_editable_files(output)?;
     let selected_rules = resolve_rule_ids(&options);
     let context = context_from(input, output, &analysis, &files);
-    let (changes, warnings, generated_assets) =
+    let (rule_changes, warnings, generated_assets) =
         apply_rules(&mut files, &selected_rules, &context, &options);
+    let mut changes = dxa_report.changes();
+    changes.extend(rule_changes);
     write_dirty_files(output, &files)?;
     write_generated_assets(output, &generated_assets)?;
     let manifest = build_manifest(
@@ -72,6 +77,7 @@ pub fn generate(
         &selected_rules,
         &files,
         &generated_assets,
+        &dxa_report.extracted_files,
         &warnings,
     )?;
     let manifest_path = output.join("bms-skin-generator-manifest.json");
@@ -150,6 +156,13 @@ fn apply_rules(
             "aspect-ratio-convert" => {
                 aspect::apply(files, context, options, &mut changes, &mut warnings);
             }
+            "lr2-dark-mode" => dark_mode::apply(
+                files,
+                context,
+                &mut generated_assets,
+                &mut changes,
+                &mut warnings,
+            ),
             "key-laser-rewrite" | "gauge-label-helper" | "lift-cover-custom-image" => {
                 warnings.push(RuleWarning {
                     rule_id: (*rule_id).to_owned(),
@@ -245,6 +258,7 @@ const RULE_ORDER: &[&str] = &[
     "lift-number",
     "judge-line-follow",
     "aspect-ratio-convert",
+    "lr2-dark-mode",
     "key-laser-rewrite",
     "gauge-label-helper",
     "lift-cover-custom-image",

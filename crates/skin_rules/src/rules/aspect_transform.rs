@@ -56,6 +56,23 @@ pub(super) fn transform_source_dimensions(
     })
 }
 
+pub(super) fn transform_source_vertical_cutoff(
+    record: &mut CsvRecord,
+    transform: LayoutTransform,
+    field: usize,
+) -> bool {
+    if !record.field_i32(field).is_some_and(|value| value > 0) {
+        return false;
+    }
+    transform_axis_position(
+        record,
+        field,
+        transform.target.y,
+        transform.target.height,
+        transform.source_height,
+    )
+}
+
 pub(super) fn scale(value: i32, numerator: i32, denominator: i32) -> i32 {
     if denominator == 0 {
         return value;

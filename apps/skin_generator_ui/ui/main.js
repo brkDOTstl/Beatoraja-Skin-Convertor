@@ -1,15 +1,10 @@
 import { createTranslator } from "./i18n.js";
+import { presetRules } from "./presets.js";
 import { renderDetectedLayout, renderOutput, renderRules } from "./render.js";
 import { createBatchController, validateGenerationPaths } from "./batch.js";
 
 const invoke = window.__TAURI__?.core?.invoke;
 const $ = (id) => document.getElementById(id);
-const presetRules = {
-  "safe-auto": ["resolution-declaration", "theme-path-rebase", "asset-reference-repair", "follow-lift-op4", "key-laser-layer-compat", "judge-line-follow", "blend-fallback"],
-  "visible-lift": ["resolution-declaration", "theme-path-rebase", "asset-reference-repair", "follow-lift-op4", "key-laser-layer-compat", "judge-line-follow", "blend-fallback", "lift-cover-copy-sudden", "green-number", "lift-number"],
-  "transparent-lift": ["resolution-declaration", "theme-path-rebase", "asset-reference-repair", "follow-lift-op4", "key-laser-layer-compat", "judge-line-follow", "blend-fallback", "lift-cover-transparent", "green-number", "lift-number"],
-  "fhd-4x3": ["resolution-declaration", "theme-path-rebase", "asset-reference-repair", "follow-lift-op4", "key-laser-layer-compat", "judge-line-follow", "blend-fallback", "aspect-ratio-convert"],
-};
 
 const state = {
   rules: [],
@@ -92,8 +87,15 @@ function wireOptions() {
   $("resolution").addEventListener("change", () => {
     syncAspectRule();
     syncResolutionZeroAspectNote();
+    batchController?.render();
   });
-  $("targetAspect").addEventListener("change", syncAspectRule);
+  $("targetAspect").addEventListener("change", () => {
+    syncAspectRule();
+    batchController?.render();
+  });
+  for (const id of ["preserveBombAspect", "preserveNowjudgeAspect", "preserveNowcomboAspect"]) {
+    $(id).addEventListener("change", () => batchController?.render());
+  }
 }
 
 async function runCommand(command, args) {
@@ -279,6 +281,7 @@ function fallbackRules() {
     ["lift-number", "numbers", "recommended_confirm", true],
     ["aspect-ratio-convert", "layout", "recommended_confirm", true],
     ["blend-fallback", "compatibility", "recommended_confirm", true],
+    ["lr2-dark-mode", "compatibility", "recommended_confirm", true],
     ["key-laser-rewrite", "compatibility", "risky_manual", false],
     ["gauge-label-helper", "compatibility", "risky_manual", false],
   ];

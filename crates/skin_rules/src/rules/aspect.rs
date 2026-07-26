@@ -8,10 +8,11 @@ use crate::{
     rules::{
         aspect_schema::{
             DestinationGeometry, destination_geometry, slider_range_axis, source_dimensions,
+            source_vertical_cutoff,
         },
         aspect_transform::{
             SymmetricHorizontalFrame, preserve_symmetric_horizontal_frame, scale,
-            transform_geometry, transform_source_dimensions,
+            transform_geometry, transform_source_dimensions, transform_source_vertical_cutoff,
         },
         geometry::judgment_geometries,
     },
@@ -77,6 +78,8 @@ pub(crate) fn apply(
                 slider_range_axis(&record).is_some_and(|axis| {
                     transform_source_dimensions(&mut record, transform, &[(12, axis)])
                 })
+            } else if let Some(field) = source_vertical_cutoff(&command) {
+                transform_source_vertical_cutoff(&mut record, transform, field)
             } else {
                 transform_source_dimensions(&mut record, transform, source_dimensions(&command))
             };

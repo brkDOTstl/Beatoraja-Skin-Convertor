@@ -108,6 +108,11 @@ impl TextDocument {
     pub fn insert_generated_line(&mut self, index: usize, content: Vec<u8>) {
         let line = Line::new(content, Some(self.dominant_line_ending));
         if index >= self.lines.len() {
+            if let Some(previous) = self.lines.last_mut()
+                && previous.ending.is_none()
+            {
+                previous.ending = Some(self.dominant_line_ending);
+            }
             self.lines.push(line);
         } else {
             self.lines.insert(index, line);
@@ -115,8 +120,7 @@ impl TextDocument {
     }
 
     pub fn push_generated_line(&mut self, content: Vec<u8>) {
-        self.lines
-            .push(Line::new(content, Some(self.dominant_line_ending)));
+        self.insert_generated_line(self.lines.len(), content);
     }
 
     pub fn to_bytes(&self) -> Vec<u8> {

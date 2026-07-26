@@ -51,11 +51,25 @@ pub(crate) fn build_manifest(
     selected_rules: &[String],
     files: &[EditableFile],
     generated_assets: &[GeneratedAsset],
+    additional_changed_files: &[PathBuf],
     warnings: &[RuleWarning],
 ) -> RuleResult<OutputManifest> {
     let generated_at_unix = SystemTime::now()
         .duration_since(UNIX_EPOCH)
         .map_or(0, |duration| duration.as_secs());
+    let mut changed_files = files
+        .iter()
+        .filter(|file| file.dirty)
+        .map(|file| file.relative_path.clone())
+        .chain(
+            generated_assets
+                .iter()
+                .map(|asset| asset.relative_path.clone()),
+        )
+        .chain(additional_changed_files.iter().cloned())
+        .collect::<Vec<_>>();
+    changed_files.sort();
+    changed_files.dedup();
     Ok(OutputManifest {
         app_version: env!("CARGO_PKG_VERSION").to_owned(),
         source_path: input.to_path_buf(),
@@ -64,16 +78,7 @@ pub(crate) fn build_manifest(
         generated_at_unix,
         preset: options.preset.clone(),
         active_rules: selected_rules.to_vec(),
-        changed_files: files
-            .iter()
-            .filter(|file| file.dirty)
-            .map(|file| file.relative_path.clone())
-            .chain(
-                generated_assets
-                    .iter()
-                    .map(|asset| asset.relative_path.clone()),
-            )
-            .collect(),
+        changed_files,
         warnings: warnings.to_vec(),
     })
 }

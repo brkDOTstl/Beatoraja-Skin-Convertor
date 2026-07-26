@@ -1,0 +1,7 @@
+DxaDecode.exe is the LR2 DXA decoder version 1.02 supplied for this project.
+
+SHA-256:
+31076DC3B209229F4E9931C8FA06869ED699E3297E12C56970C219333E9175E2
+
+The converter embeds this executable and runs it locally to unpack .dxa font
+archives that beatoraja cannot read directly.

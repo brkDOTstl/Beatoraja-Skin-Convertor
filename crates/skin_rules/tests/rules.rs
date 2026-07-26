@@ -1,4 +1,4 @@
-use std::fs;
+use std::{fs, path::Path};
 
 use skin_core::analyze_path;
 use skin_rules::{ConversionOptions, dry_run, generate};
@@ -9,12 +9,68 @@ mod aspect;
 mod aspect_edge;
 #[path = "rules/assets.rs"]
 mod assets;
+#[path = "rules/dark_mode.rs"]
+mod dark_mode;
 #[path = "rules/dependencies.rs"]
 mod dependencies;
 #[path = "rules/support.rs"]
 mod support;
 
 use support::{make_fixture, make_temp_root, populate_fixture, write_oadx_layout};
+
+#[cfg(windows)]
+#[test]
+fn generate_always_unpacks_dxa_font_archives() {
+    let root = make_temp_root("dxa-font-source");
+    fs::create_dir_all(root.join("Font")).expect("create Font directory");
+    fs::write(root.join("play.lr2skin"), "#INFORMATION,0,title,maker,\r\n")
+        .expect("write skin header");
+    fs::copy(
+        Path::new(env!("CARGO_MANIFEST_DIR"))
+            .join("tests")
+            .join("fixtures")
+            .join("tiny-font.dxa"),
+        root.join("Font").join("SystemFont.dxa"),
+    )
+    .expect("copy DXA fixture");
+
+    let output = make_temp_root("dxa-font-output");
+    let report = generate(
+        &root,
+        &output,
+        ConversionOptions {
+            rules: vec!["blend-fallback".to_owned()],
+            ..ConversionOptions::default()
+        },
+    )
+    .expect("generation should unpack DXA archives");
+
+    assert!(output.join("Font").join("SystemFont.dxa").is_file());
+    assert_eq!(
+        fs::read_to_string(output.join("Font").join("SystemFont").join("font.lr2font"))
+            .expect("read unpacked LR2 font"),
+        "#S,12,12\r\n"
+    );
+    assert!(
+        output
+            .join("Font")
+            .join("SystemFont")
+            .join("font.png")
+            .is_file()
+    );
+    assert!(
+        report
+            .changes
+            .iter()
+            .any(|change| change.rule_id == "dxa-font-unpack")
+    );
+    assert!(
+        report
+            .manifest
+            .changed_files
+            .contains(&Path::new("Font").join("SystemFont").join("font.lr2font"))
+    );
+}
 
 #[test]
 fn dry_run_adds_lift_number_from_green_number_anchor() {

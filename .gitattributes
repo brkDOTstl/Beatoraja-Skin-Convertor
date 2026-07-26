@@ -10,3 +10,5 @@
 *.js text eol=lf
 
 *.ico binary
+*.dxa binary
+*.exe binary

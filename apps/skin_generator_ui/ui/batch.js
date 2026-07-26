@@ -17,7 +17,7 @@ export function createBatchController({
 
   function addCurrent() {
     const t = getTranslator();
-    const job = getPayload(true);
+    const job = snapshotBatchJob(getPayload(true));
     const error = validateGenerationPaths(job.input, job.output, t);
     if (error) {
       onReport({ error });
@@ -39,30 +39,14 @@ export function createBatchController({
       return;
     }
     onBusy(true);
-    const results = [];
     try {
-      for (const job of jobs) {
-        try {
-          const report = await invoke("generate_skin", job);
-          results.push({
-            input: job.input,
-            output: job.output,
-            ok: true,
-            changed_files: report.manifest?.changed_files?.length || 0,
-            warnings: report.warnings?.length || 0,
-          });
-        } catch (error) {
-          results.push({
-            input: job.input,
-            output: job.output,
-            ok: false,
-            changed_files: 0,
-            warnings: 0,
-            error: String(error),
-          });
-        }
-      }
+      const jobsForRun = applyCurrentBatchLayout(jobs, getPayload(false));
+      jobs.splice(0, jobs.length, ...jobsForRun);
+      render();
+      const results = await invoke("generate_batch", { jobs: jobsForRun });
       onReport({ batch_results: results });
+    } catch (error) {
+      onReport({ error: String(error) });
     } finally {
       onBusy(false);
     }
@@ -76,7 +60,8 @@ export function createBatchController({
     const clear = document.getElementById("clearBatchBtn");
     clear.title = t("clearBatch");
     clear.setAttribute("aria-label", t("clearBatch"));
-    jobs.forEach((job, index) => list.append(batchRow(job, index, t, remove)));
+    const displayJobs = applyCurrentBatchLayout(jobs, getPayload(false));
+    displayJobs.forEach((job, index) => list.append(batchRow(job, index, t, remove)));
     document.getElementById("batchQueue").hidden = jobs.length === 0;
     document.getElementById("runBatchBtn").disabled = busy || jobs.length === 0;
     document.getElementById("clearBatchBtn").disabled = busy || jobs.length === 0;
@@ -104,6 +89,46 @@ export function validateGenerationPaths(input, output, t) {
   if (inputKey === outputKey) return t("outputEqualsInput");
   if (outputKey.startsWith(`${inputKey}\\`)) return t("outputInsideInput");
   return null;
+}
+
+export function snapshotBatchJob(payload) {
+  const resolution = payload.resolution == null || payload.resolution === ""
+    ? null
+    : Number(payload.resolution);
+  return {
+    input: String(payload.input ?? ""),
+    output: String(payload.output ?? ""),
+    preset: payload.preset ?? null,
+    rules: Array.isArray(payload.rules) ? [...payload.rules] : [],
+    liftCoverStrategy: payload.liftCoverStrategy ?? null,
+    resolution,
+    targetAspect: payload.targetAspect || null,
+    aspectProtection: {
+      bomb_effects: Boolean(payload.aspectProtection?.bomb_effects),
+      nowjudge: Boolean(payload.aspectProtection?.nowjudge),
+      nowcombo: Boolean(payload.aspectProtection?.nowcombo),
+    },
+  };
+}
+
+export function applyCurrentBatchLayout(jobs, payload) {
+  const current = snapshotBatchJob(payload);
+  const hasExplicitLayout = current.resolution != null || current.targetAspect != null;
+  return jobs.map((job) => {
+    const prepared = snapshotBatchJob(job);
+    if (!hasExplicitLayout) return prepared;
+
+    const rules = new Set(prepared.rules);
+    if (current.resolution != null) rules.add("resolution-declaration");
+    rules.add("aspect-ratio-convert");
+    return {
+      ...prepared,
+      rules: [...rules],
+      resolution: current.resolution,
+      targetAspect: current.targetAspect,
+      aspectProtection: { ...current.aspectProtection },
+    };
+  });
 }
 
 function normalizeWindowsPath(value) {
@@ -135,8 +160,17 @@ function batchRow(job, index, t, onRemove) {
       : "keepLift";
   const options = document.createElement("small");
   const protectedCount = Object.values(job.aspectProtection || {}).filter(Boolean).length;
-  const layout = job.targetAspect || (job.resolution == null ? "" : t("keepAspect"));
-  options.textContent = `${job.rules.length} ${t("rulesShort")} · ${t(strategyKey)}${layout ? ` · ${layout}` : ""} · ${protectedCount} ${t("protectedShort")}`;
+  const resolutions = {
+    0: "SD 640×480",
+    1: "HD 1280×720",
+    2: "FHD 1920×1080",
+    3: "4K 3840×2160",
+  };
+  const resolution = job.resolution == null
+    ? t("keepResolution")
+    : resolutions[job.resolution] || `#RESOLUTION,${job.resolution}`;
+  const aspect = job.targetAspect || t("keepAspect");
+  options.textContent = `${job.rules.length} ${t("rulesShort")} · ${t(strategyKey)} · ${resolution} · ${aspect} · ${protectedCount} ${t("protectedShort")}`;
   copy.append(source, output, options);
   const remove = document.createElement("button");
   remove.type = "button";

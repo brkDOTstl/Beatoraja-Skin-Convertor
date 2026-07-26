@@ -23,6 +23,20 @@ pub enum RuleError {
     OutputInsideInput,
     #[error("output path already exists: {0}")]
     OutputExists(PathBuf),
+    #[error("DXA decoder could not be started for {archive}: {source}")]
+    DxaDecoderLaunch {
+        archive: PathBuf,
+        #[source]
+        source: io::Error,
+    },
+    #[error("DXA decoder failed for {archive} ({status}): {details}")]
+    DxaDecodeFailed {
+        archive: PathBuf,
+        status: String,
+        details: String,
+    },
+    #[error("DXA decoder did not produce {expected} for {archive}")]
+    DxaDecodeOutputMissing { archive: PathBuf, expected: PathBuf },
 }
 
 impl RuleError {

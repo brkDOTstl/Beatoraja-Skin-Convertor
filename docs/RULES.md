@@ -9,6 +9,13 @@ Core beatoraja constants:
 - `op4=3`: shift a destination upward by the LIFT/lanecover amount.
 - `op4=4`: green-number special placement used by known ports.
 
+Mandatory conversion stage:
+
+- Every `.dxa` archive is unpacked after the source skin is copied and before compatibility rules
+  run. This makes LR2 fonts available as ordinary `font.lr2font` and image files for beatoraja.
+  The embedded LR2 `DxaDecode.exe` runs offline, the source archive remains in the output, and all
+  extracted files are recorded in the output manifest. This stage has no disable switch.
+
 Implemented rules:
 
 - `resolution-declaration`: detect and insert a missing `#RESOLUTION`, or replace it when an explicit
@@ -47,6 +54,13 @@ entry point. Explicit target aspect selects `aspect-ratio-convert`, including CL
 Aspect protection only prevents new non-uniform scaling. It deliberately does not inspect or repair
 artwork and geometry mistakes already present in the source skin.
 - `blend-fallback`: replace LR2-only destination `blend=5` with beatoraja-compatible `blend=2`, and disable structurally matched duplicate option-label fades that darken in beatoraja.
+- `lr2-dark-mode`: add a skin-selectable `OFF` / `DARK` / `DARK2` route without consuming
+  destination option fields. Hidden groups retain their parsed objects and draw order while all
+  destination frames are made transparent. `DARK` hides static `SRC_IMAGE` groups. `DARK2` keeps
+  only IMAGE timers `2`, `3`, `48`, `49`, `50..69`, and `140`, hides secondary HUD groups, and
+  preserves SUDDEN and LIFT lane covers as opaque black boards. A rhythm line remains visible when
+  timer `140` is declared on either its source or destination. Notes, lines, judgment lines, gauges,
+  BGA, `NOWJUDGE`, and `NOWCOMBO` are not filtered. This rule is opt-in.
 
 Key-laser sprite reconstruction, gauge-label sprite ordering, and arbitrary custom LIFT images stay
 manual because their source rectangles and animation ordering are skin-specific.

@@ -59,6 +59,125 @@ fn sd_four_three_scales_to_fhd_sixteen_nine() {
 }
 
 #[test]
+fn lift_and_hidden_cutoffs_scale_from_sd_to_fhd_with_their_destinations() {
+    let root = fixture(
+        "aspect-cutoff-sd-source",
+        0,
+        concat!(
+            "#SRC_LIFT,0,0,0,0,-1,-1,1,1,0,0,400,0,0,0\r\n",
+            "#DST_LIFT,0,0,100,400,200,80,2,255,255,255,255,1,0,0,0,0,0,0,0,0,3\r\n",
+            "#SRC_HIDDEN,0,0,0,0,-1,-1,1,1,0,0,400,0,0,0\r\n",
+            "#DST_HIDDEN,0,0,100,400,200,80,2,255,255,255,255,1,0,0,0,0,0,0,0,0\r\n",
+        )
+        .as_bytes(),
+    );
+    let csv = convert(
+        &root,
+        "aspect-cutoff-fhd-output",
+        ConversionOptions {
+            rules: vec![
+                "resolution-declaration".to_owned(),
+                "aspect-ratio-convert".to_owned(),
+            ],
+            resolution: Some(2),
+            target_aspect: Some(TargetAspect::SixteenNine),
+            ..ConversionOptions::default()
+        },
+    );
+
+    assert!(csv.contains("#SRC_LIFT,0,0,0,0,-1,-1,1,1,0,0,900,0,0,0"));
+    assert!(csv.contains("#DST_LIFT,0,0,300,900,600,180,"));
+    assert!(csv.contains("#SRC_HIDDEN,0,0,0,0,-1,-1,1,1,0,0,900,0,0,0"));
+    assert!(csv.contains("#DST_HIDDEN,0,0,300,900,600,180,"));
+}
+
+#[test]
+fn lift_and_hidden_cutoffs_scale_from_fhd_to_sd_with_their_destinations() {
+    let root = fixture(
+        "aspect-cutoff-fhd-source",
+        2,
+        concat!(
+            "#SRC_LIFT,0,0,0,0,-1,-1,1,1,0,0,900,0,0,0\r\n",
+            "#DST_LIFT,0,0,300,900,600,180,2,255,255,255,255,1,0,0,0,0,0,0,0,0,3\r\n",
+            "#SRC_HIDDEN,0,0,0,0,-1,-1,1,1,0,0,900,0,0,0\r\n",
+            "#DST_HIDDEN,0,0,300,900,600,180,2,255,255,255,255,1,0,0,0,0,0,0,0,0\r\n",
+        )
+        .as_bytes(),
+    );
+    let csv = convert(
+        &root,
+        "aspect-cutoff-sd-output",
+        ConversionOptions {
+            rules: vec![
+                "resolution-declaration".to_owned(),
+                "aspect-ratio-convert".to_owned(),
+            ],
+            resolution: Some(0),
+            target_aspect: Some(TargetAspect::SixteenNine),
+            ..ConversionOptions::default()
+        },
+    );
+
+    assert!(csv.contains("#SRC_LIFT,0,0,0,0,-1,-1,1,1,0,0,400,0,0,0"));
+    assert!(csv.contains("#DST_LIFT,0,0,100,400,200,80,"));
+    assert!(csv.contains("#SRC_HIDDEN,0,0,0,0,-1,-1,1,1,0,0,400,0,0,0"));
+    assert!(csv.contains("#DST_HIDDEN,0,0,100,400,200,80,"));
+}
+
+#[test]
+fn generated_lift_cutoff_is_scaled_after_copying_the_sudden_cover() {
+    let root = fixture(
+        "aspect-generated-lift-fhd-source",
+        2,
+        concat!(
+            "#SRC_SLIDER,0,0,0,0,600,900,1,1,0,0,2,900,4,1\r\n",
+            "#DST_SLIDER,0,0,300,-900,600,900,0,255,255,255,255,1,0,0,0,0,0,0,0,0,0\r\n",
+            "#SRC_JUDGELINE,0,0,0,0,1,1,1,1,0,0,0,0,0\r\n",
+            "#DST_JUDGELINE,0,0,300,894,600,6,0,255,255,255,255,1,0,0,0,0,0,0,0,0,3\r\n",
+        )
+        .as_bytes(),
+    );
+    let csv = convert(
+        &root,
+        "aspect-generated-lift-sd-output",
+        ConversionOptions {
+            rules: vec![
+                "resolution-declaration".to_owned(),
+                "lift-cover-copy-sudden".to_owned(),
+                "aspect-ratio-convert".to_owned(),
+            ],
+            resolution: Some(0),
+            target_aspect: Some(TargetAspect::SixteenNine),
+            lift_cover_strategy: Some("copy-sudden".to_owned()),
+            ..ConversionOptions::default()
+        },
+    );
+
+    assert!(csv.contains("#SRC_LIFT,0,0,0,0,600,900,1,1,0,0,400,0,0,0"));
+    assert!(csv.contains("#DST_LIFT,0,0,100,400,200,400,"));
+}
+
+#[test]
+fn disabled_hidden_cutoff_stays_disabled_during_aspect_conversion() {
+    let root = fixture(
+        "aspect-disabled-cutoff-source",
+        0,
+        b"#SRC_HIDDEN,0,0,0,0,-1,-1,1,1,0,0,0,0,0,0\r\n",
+    );
+    let csv = convert(
+        &root,
+        "aspect-disabled-cutoff-output",
+        ConversionOptions {
+            rules: vec!["aspect-ratio-convert".to_owned()],
+            target_aspect: Some(TargetAspect::FourThree),
+            ..ConversionOptions::default()
+        },
+    );
+
+    assert!(csv.contains("#SRC_HIDDEN,0,0,0,0,-1,-1,1,1,0,0,0,0,0,0"));
+}
+
+#[test]
 fn sd_four_three_scales_to_centered_fhd_four_three() {
     let root = fixture(
         "aspect-sd-centered-source",

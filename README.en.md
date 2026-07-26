@@ -10,6 +10,9 @@ analysis, dry runs, individual conversion, and batch conversion without modifyin
 The tool provides structural analysis, dry-run reports, non-destructive copy output, batch jobs,
 and a bilingual Japanese/English desktop UI. It detects LR2 Play CSV files by content instead of
 folder name and recognizes SD, HD, FHD, and 4K canvases.
+Every `.dxa` archive is unpacked automatically during generation. This is a mandatory compatibility
+stage because beatoraja cannot read LR2 fonts directly from DXA archives. The bundled
+`DxaDecode.exe` runs locally, and the original `.dxa` files remain in the generated skin.
 
 Implemented rules:
 
@@ -24,6 +27,12 @@ Implemented rules:
 - `green-number`
 - `lift-number`
 - `aspect-ratio-convert`
+- `lr2-dark-mode`
+
+Enabling `lr2-dark-mode` adds an `LR2 DARK MODE` customization entry to each converted Play skin,
+with in-game `OFF`, `DARK`, and `DARK2` choices. Only CSV files recursively referenced by Play
+headers are transformed; unrelated Result and Select modules are left unchanged.
+This is an opt-in rule available in manual mode and is not enabled by the built-in presets.
 
 Exposed but not automated yet:
 

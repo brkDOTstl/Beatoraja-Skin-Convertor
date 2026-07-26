@@ -19,3 +19,18 @@ fn roundtrips_mixed_invalid_bytes_without_utf8_conversion() {
     let document = TextDocument::from_bytes(PathBuf::from("bad.csv"), input.clone());
     assert_eq!(document.to_bytes(), input);
 }
+
+#[test]
+fn appending_generated_lines_separates_an_unterminated_last_line() {
+    let mut document = TextDocument::from_bytes(
+        PathBuf::from("unterminated.csv"),
+        b"#IF,900\r\n#ENDIF".to_vec(),
+    );
+
+    document.push_generated_line(b"#INCLUDE,route".to_vec());
+
+    assert_eq!(
+        document.to_bytes(),
+        b"#IF,900\r\n#ENDIF\r\n#INCLUDE,route\r\n"
+    );
+}

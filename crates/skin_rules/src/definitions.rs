@@ -110,6 +110,14 @@ pub fn all_rule_definitions() -> Vec<RuleDefinition> {
             true,
             "Convert LR2-only blend=5 frames and disable incompatible duplicate option-label fade overlays.",
         ),
+        rule(
+            "lr2-dark-mode",
+            "compatibility",
+            "LR2 DARK MODE",
+            Confidence::RecommendedConfirm,
+            false,
+            "Add OFF, DARK, and DARK2 skin variants using LR2 object-category and timer filtering while preserving an opaque black lane cover in DARK2.",
+        ),
         manual_rule(
             "key-laser-rewrite",
             "compatibility",
