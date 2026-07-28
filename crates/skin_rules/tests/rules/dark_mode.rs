@@ -328,8 +328,8 @@ fn dark2_keeps_sudden_green_and_lift_numbers() {
 
 #[test]
 fn dark2_uses_the_exact_lr2_primary_timer_allowlist() {
-    let kept = [2, 3, 48, 49, 50, 69, 140];
-    let hidden = [0, 1, 4, 47, 70, 139, 141];
+    let kept = [2, 3, 48, 49, 50, 69, 70, 89, 140];
+    let hidden = [0, 1, 4, 47, 90, 139, 141];
     let mut layout = String::new();
     for timer in kept.into_iter().chain(hidden) {
         layout.push_str(&format!("#SRC_IMAGE,0,0,0,0,1,1,1,1,0,{timer},0,0,0\r\n"));

@@ -15,6 +15,8 @@ stage because beatoraja cannot read LR2 fonts directly from DXA archives. The bu
 `DxaDecode.exe` runs locally, and the original `.dxa` files remain in the generated skin.
 The LR2 real-time `num=114` POOR counter is also always mapped to beatoraja `num=426`
 (POOR + MISS). This compatibility stage has no disable switch.
+One-shot LR2 note bombs are also adjusted at their exact cycle boundary so beatoraja does not
+briefly wrap them back to frame zero after the effect ends. Their animation speed is unchanged.
 
 Implemented rules:
 
@@ -34,7 +36,7 @@ Implemented rules:
 Enabling `lr2-dark-mode` adds an `LR2 DARK MODE` customization entry to each converted Play skin,
 with in-game `OFF`, `DARK`, and `DARK2` choices. Only CSV files recursively referenced by Play
 headers are transformed; unrelated Result and Select modules are left unchanged.
-SUDDEN values, green numbers, and LIFT numbers remain visible in DARK2.
+Normal bombs, LN hold bombs, SUDDEN values, green numbers, and LIFT numbers remain visible in DARK2.
 Native judgment lines and beatoraja compatibility images with matching source and destination
 geometry remain visible in both DARK variants.
 This is an opt-in rule available in manual mode and is not enabled by the built-in presets.

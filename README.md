@@ -15,6 +15,8 @@ beatorajaがLR2のDXA内フォントを直接読み込めない問題に対応�
 内蔵の`DxaDecode.exe`をローカルで実行し、元の`.dxa`も出力側へ残します。
 また、LR2のリアルタイムPOOR表示と同じ意味になるよう、`num=114`は常に
 beatorajaの`num=426`（POOR + MISS）へ変換します。この互換変換も無効化できません。
+一度だけ再生するLR2の通常BOMBが終了時に先頭フレームへ戻って一瞬再表示される
+beatoraja固有の境界差も、BOMBの速度を変えずに必ず補正します。
 
 実装済みルール:
 
@@ -34,7 +36,7 @@ beatorajaの`num=426`（POOR + MISS）へ変換します。この互換変換も
 `lr2-dark-mode`を有効にすると、変換後のPlayスキン設定に`LR2 DARK MODE`が追加され、
 `OFF`、`DARK`、`DARK2`をゲーム側で選択できます。Playヘッダーから実際に参照されるCSVだけを
 再帰的に変換し、他のResultやSelectモジュールは変更しません。
-DARK2でもSUDDEN数値、green number、LIFT numberは表示したまま維持します。
+DARK2でも通常BOMB、LN HOLD BOMB、SUDDEN数値、green number、LIFT numberは表示したまま維持します。
 通常の判定線と、同じ素材・座標を使うbeatoraja互換判定線もDARK1/DARK2で維持します。
 この機能は手動モードで選択するオプトイン機能で、標準プリセットでは有効になりません。
 

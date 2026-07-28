@@ -978,7 +978,7 @@ fn effective_image_timer(
 }
 
 fn dark2_keeps_timer(timer: i32) -> bool {
-    matches!(timer, 2 | 3 | 48 | 49 | 140) || (50..=69).contains(&timer)
+    matches!(timer, 2 | 3 | 48 | 49 | 140) || (50..=89).contains(&timer)
 }
 
 fn destination_for_source(source: &str) -> Option<&'static str> {

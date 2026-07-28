@@ -120,6 +120,61 @@ fn generate_always_maps_lr2_poor_to_beatoraja_poor_plus_miss() {
 }
 
 #[test]
+fn generate_prevents_one_shot_lr2_bombs_from_wrapping_to_frame_zero() {
+    let root = make_temp_root("lr2-bomb-cycle-source");
+    fs::create_dir_all(root.join("Play")).expect("create Play directory");
+    fs::write(
+        root.join("play.lr2skin"),
+        "#INFORMATION,0,title,maker,\r\n#INCLUDE,Play\\layout.csv\r\n",
+    )
+    .expect("write header");
+    fs::write(
+        root.join("Play").join("layout.csv"),
+        concat!(
+            "#SRC_IMAGE,0,0,0,0,180,10,18,1,300,50,0,0,0\r\n",
+            "#DST_IMAGE,0,0,10,10,180,10,0,255,255,255,255,2,1,0,0,-1,50,0,0,0\r\n",
+            "#DST_IMAGE,0,300,10,10,180,10,0,255,255,255,255,2,1,0,0\r\n",
+            "#SRC_IMAGE,0,0,0,0,180,10,18,1,300,51,0,0,0\r\n",
+            "#DST_IMAGE,0,0,20,10,180,10,0,255,255,255,255,2,1,0,0,0,51,0,0,0\r\n",
+            "#DST_IMAGE,0,300,20,10,180,10,0,255,255,255,255,2,1,0,0\r\n",
+            "#SRC_IMAGE,0,0,0,0,180,10,18,1,300,52,0,0,0\r\n",
+            "#DST_IMAGE,0,0,30,10,180,10,0,255,255,255,255,2,1,0,0,-1,52,0,0,0\r\n",
+            "#DST_IMAGE,0,600,30,10,180,10,0,255,255,255,255,2,1,0,0\r\n",
+            "#SRC_IMAGE,0,0,0,0,180,10,18,1,300,70,0,0,0\r\n",
+            "#DST_IMAGE,0,0,40,10,180,10,0,255,255,255,255,2,1,0,0,-1,70,0,0,0\r\n",
+            "#DST_IMAGE,0,300,40,10,180,10,0,255,255,255,255,2,1,0,0\r\n",
+        ),
+    )
+    .expect("write layout");
+
+    let output = make_temp_root("lr2-bomb-cycle-output");
+    let report = generate(
+        &root,
+        &output,
+        ConversionOptions {
+            rules: vec!["blend-fallback".to_owned()],
+            ..ConversionOptions::default()
+        },
+    )
+    .expect("generation should succeed");
+
+    let csv =
+        fs::read_to_string(output.join("Play").join("layout.csv")).expect("read generated layout");
+    assert!(csv.contains("#DST_IMAGE,0,299,10,10,180,10"));
+    assert!(csv.contains("#DST_IMAGE,0,300,20,10,180,10"));
+    assert!(csv.contains("#DST_IMAGE,0,600,30,10,180,10"));
+    assert!(csv.contains("#DST_IMAGE,0,300,40,10,180,10"));
+    assert_eq!(
+        report
+            .changes
+            .iter()
+            .filter(|change| change.rule_id == "lr2-bomb-cycle-boundary-compat")
+            .count(),
+        1
+    );
+}
+
+#[test]
 fn dry_run_adds_lift_number_from_green_number_anchor() {
     let root = make_fixture("lift-number");
     let report = dry_run(

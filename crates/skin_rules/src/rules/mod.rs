@@ -3,6 +3,7 @@ mod aspect_schema;
 mod aspect_transform;
 pub(crate) mod asset_repair;
 pub(crate) mod basic;
+pub(crate) mod bomb_cycle;
 pub(crate) mod dark_mode;
 pub(crate) mod follow_lift;
 pub(crate) mod geometry;
