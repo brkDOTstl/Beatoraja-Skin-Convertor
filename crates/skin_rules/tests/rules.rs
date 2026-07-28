@@ -73,6 +73,53 @@ fn generate_always_unpacks_dxa_font_archives() {
 }
 
 #[test]
+fn generate_always_maps_lr2_poor_to_beatoraja_poor_plus_miss() {
+    let root = make_temp_root("lr2-poor-count-source");
+    fs::create_dir_all(root.join("Play")).expect("create Play directory");
+    fs::write(
+        root.join("play.lr2skin"),
+        "#INFORMATION,0,title,maker,\r\n#INCLUDE,Play\\layout.csv\r\n",
+    )
+    .expect("write header");
+    fs::write(
+        root.join("Play").join("layout.csv"),
+        concat!(
+            "#SRC_NUMBER,0,0,0,0,100,10,10,1,0,0,113,0,4\r\n",
+            "#DST_NUMBER,0,0,10,10,10,10,0,255,255,255,255,0,0,0,0,0,0,0,0,0\r\n",
+            "#SRC_NUMBER,0,0,0,0,100,10,10,1,0,0,114,0,4\r\n",
+            "#DST_NUMBER,0,0,20,10,10,10,0,255,255,255,255,0,0,0,0,0,0,0,0,0\r\n",
+            "#SRC_NUMBER,0,0,0,0,100,10,10,1,0,0,84,0,4\r\n",
+            "#DST_NUMBER,0,0,30,10,10,10,0,255,255,255,255,0,0,0,0,0,0,0,0,0\r\n",
+        ),
+    )
+    .expect("write layout");
+
+    let output = make_temp_root("lr2-poor-count-output");
+    let report = generate(
+        &root,
+        &output,
+        ConversionOptions {
+            rules: vec!["blend-fallback".to_owned()],
+            ..ConversionOptions::default()
+        },
+    )
+    .expect("generation should succeed");
+
+    let csv =
+        fs::read_to_string(output.join("Play").join("layout.csv")).expect("read generated layout");
+    assert!(csv.contains(",113,0,4"));
+    assert!(csv.contains(",426,0,4"));
+    assert!(csv.contains(",84,0,4"));
+    assert!(!csv.contains(",114,0,4"));
+    assert!(
+        report
+            .changes
+            .iter()
+            .any(|change| change.rule_id == "lr2-poor-count-compat")
+    );
+}
+
+#[test]
 fn dry_run_adds_lift_number_from_green_number_anchor() {
     let root = make_fixture("lift-number");
     let report = dry_run(

@@ -10,7 +10,8 @@ use crate::{
         ConversionOptions, ConversionReport, FileChange, GeneratedAsset, RuleContext, RuleWarning,
     },
     rules::{
-        aspect, basic, dark_mode, follow_lift, judge_line, key_laser_layer, lift_cover,
+        aspect, basic, dark_mode, follow_lift, judge_count, judge_line, key_laser_layer,
+        lift_cover,
         numbers::{self, NumberKind},
     },
     theme::{detect_internal_theme, theme_dir_name},
@@ -106,6 +107,8 @@ fn apply_rules(
         .iter()
         .map(String::as_str)
         .collect::<BTreeSet<_>>();
+
+    judge_count::apply(files, &mut changes);
 
     for rule_id in RULE_ORDER {
         if !selected.contains(rule_id) {

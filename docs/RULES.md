@@ -15,6 +15,10 @@ Mandatory conversion stage:
   run. This makes LR2 fonts available as ordinary `font.lr2font` and image files for beatoraja.
   The embedded LR2 `DxaDecode.exe` runs offline, the source archive remains in the output, and all
   extracted files are recorded in the output manifest. This stage has no disable switch.
+- Every LR2 real-time `#SRC_NUMBER` POOR counter (`num=114`) is mapped to beatoraja
+  `num=426`, whose value is POOR + MISS. This restores LR2's combined normal/empty-POOR count and
+  is applied before optional rules, including DARK variant generation. This stage has no disable
+  switch.
 
 Implemented rules:
 
@@ -61,7 +65,9 @@ artwork and geometry mistakes already present in the source skin.
   preserves SUDDEN and LIFT lane covers as opaque black boards. A rhythm line remains visible when
   timer `140` is declared on either its source or destination. Lane-cover-related numbers `14`,
   `15`, `313`, and `314` remain visible. Notes, lines, judgment lines, gauges, BGA, `NOWJUDGE`, and
-  `NOWCOMBO` are not filtered. This rule is opt-in.
+  `NOWCOMBO` are not filtered. Static beatoraja judgment-line compatibility images are recognized
+  by matching both their source slice and destination geometry to the native judgment line, and
+  remain visible in both DARK variants. This rule is opt-in.
 
 Key-laser sprite reconstruction, gauge-label sprite ordering, and arbitrary custom LIFT images stay
 manual because their source rectangles and animation ordering are skin-specific.

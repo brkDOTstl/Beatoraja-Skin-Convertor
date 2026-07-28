@@ -200,6 +200,96 @@ fn dark_modes_keep_a_rhythm_line_with_timer_140_on_its_destination() {
 }
 
 #[test]
+fn dark_modes_keep_static_judge_line_compatibility_images() {
+    let root = make_temp_root("dark-mode-judge-line-source");
+    fs::create_dir_all(root.join("Play")).expect("create Play directory");
+    fs::write(
+        root.join("play.lr2skin"),
+        "#INFORMATION,0,title,maker,\r\n#INCLUDE,Play\\layout.csv\r\n",
+    )
+    .expect("write header");
+    fs::write(
+        root.join("Play").join("layout.csv"),
+        concat!(
+            "#IMAGE,parts.png\r\n",
+            "#SRC_JUDGELINE,0,0,0,0,144,14,1,1,0,0,0,0,0\r\n",
+            "#DST_JUDGELINE,0,250,448,468,384,0,0,255,255,255,255,1,0,0,0,500,0,0,0,0,3\r\n",
+            "#DST_JUDGELINE,0,250,448,468,384,14,0,255,255,255,255,1,0,0,0,0,0,0,0,0,3\r\n",
+            "#SRC_IMAGE,0,0,0,0,144,14,1,1,0,0,0,0,0\r\n",
+            "#DST_IMAGE,0,0,448,468,384,14,0,255,255,255,255,1,0,0,0,0,0,0,0,0,3\r\n",
+            "#SRC_IMAGE,0,0,0,20,144,14,1,1,0,0,0,0,0\r\n",
+            "#DST_IMAGE,0,0,448,430,384,14,0,255,255,255,255,1,0,0,0,0,0,0,0,0,0\r\n",
+        ),
+    )
+    .expect("write layout");
+
+    let output = make_temp_root("dark-mode-judge-line-output");
+    generate(
+        &root,
+        &output,
+        ConversionOptions {
+            rules: vec!["lr2-dark-mode".to_owned()],
+            ..ConversionOptions::default()
+        },
+    )
+    .expect("generation should succeed");
+
+    for suffix in ["dark1", "dark2"] {
+        let csv = fs::read_to_string(
+            output
+                .join("Play")
+                .join(format!("layout.csv.bmsg-{suffix}")),
+        )
+        .expect("read DARK CSV");
+        assert!(
+            csv.contains("#DST_IMAGE,0,0,448,468,384,14,0,255,255,255,255,1,0,0,0,0,0,0,0,0,3")
+        );
+        assert!(csv.contains("#DST_IMAGE,0,0,448,430,384,14,0,0,255,255,255,1,0,0,0,0,0,0,0,0,0"));
+    }
+}
+
+#[test]
+fn dark_modes_keep_marked_judge_line_image_fallbacks() {
+    let root = make_temp_root("dark-mode-marked-judge-line-source");
+    fs::create_dir_all(root.join("Play")).expect("create Play directory");
+    fs::write(
+        root.join("play.lr2skin"),
+        "#INFORMATION,0,title,maker,\r\n#INCLUDE,Play\\layout.csv\r\n",
+    )
+    .expect("write header");
+    fs::write(
+        root.join("Play").join("layout.csv"),
+        concat!(
+            "#SRC_JUDGELINE,0,112,0,0,1,1,1,1,0,0,0,0,0\r\n",
+            "#DST_JUDGELINE,0,0,44,428,256,8,0,255,255,255,255,1,0,0,0,0,0,0,0,0,0\r\n",
+        ),
+    )
+    .expect("write layout");
+
+    let output = make_temp_root("dark-mode-marked-judge-line-output");
+    generate(
+        &root,
+        &output,
+        ConversionOptions {
+            rules: vec!["judge-line-follow".to_owned(), "lr2-dark-mode".to_owned()],
+            ..ConversionOptions::default()
+        },
+    )
+    .expect("generation should succeed");
+
+    for path in [
+        output.join("Play").join("layout.csv"),
+        output.join("Play").join("layout.csv.bmsg-dark1"),
+        output.join("Play").join("layout.csv.bmsg-dark2"),
+    ] {
+        let csv = fs::read_to_string(path).expect("read generated CSV");
+        assert!(csv.contains("#SRC_IMAGE,0,112,"));
+        assert!(csv.contains("//bms-skin-generator:JUDGE_LINE_IMAGE_FALLBACK"));
+        assert!(csv.contains("#DST_IMAGE,0,0,44,428,256,8,0,255,255,255,255,"));
+    }
+}
+
+#[test]
 fn dark2_keeps_sudden_green_and_lift_numbers() {
     let root = make_temp_root("dark-mode-lane-cover-numbers-source");
     fs::create_dir_all(root.join("Play")).expect("create Play directory");

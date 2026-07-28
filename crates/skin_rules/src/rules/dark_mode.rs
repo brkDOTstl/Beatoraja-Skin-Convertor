@@ -571,8 +571,9 @@ fn build_csv_variant(
     let mut active = ObjectAction::Keep;
     let mut active_destination = None;
     let mut stats = VariantStats::default();
+    let judge_line_images = judge_line_image_sources(document);
     let lane_cover_plan = if variant == DarkVariant::Dark2 {
-        lane_cover_plan(document)
+        lane_cover_plan_with_protected_images(document, &judge_line_images)
     } else {
         LaneCoverPlan::default()
     };
@@ -618,6 +619,7 @@ fn build_csv_variant(
                 &record,
                 variant,
                 effective_image_timer(document, index, &record),
+                judge_line_images.contains(&index),
             );
             active_destination = destination_for_source(&command);
             match active {
@@ -676,6 +678,14 @@ fn build_csv_variant(
 }
 
 fn lane_cover_plan(document: &TextDocument) -> LaneCoverPlan {
+    let protected_images = judge_line_image_sources(document);
+    lane_cover_plan_with_protected_images(document, &protected_images)
+}
+
+fn lane_cover_plan_with_protected_images(
+    document: &TextDocument,
+    protected_images: &BTreeSet<usize>,
+) -> LaneCoverPlan {
     let image_lines = command_indices(document, "#IMAGE");
     let image_count = image_lines.len() as i32;
     let mut lane_cover_images = BTreeSet::new();
@@ -701,6 +711,7 @@ fn lane_cover_plan(document: &TextDocument) -> LaneCoverPlan {
             &source,
             DarkVariant::Dark2,
             effective_image_timer(document, index, &source),
+            protected_images.contains(&index),
         ) != ObjectAction::Hide
         {
             other_source_images.insert(image_index);
@@ -785,7 +796,12 @@ fn source_action(
     source: &CsvRecord,
     variant: DarkVariant,
     effective_image_timer: Option<i32>,
+    protected_judge_line: bool,
 ) -> ObjectAction {
+    if protected_judge_line {
+        return ObjectAction::Keep;
+    }
+
     if source.is_command("#SRC_IMAGE") {
         let timer = effective_image_timer.unwrap_or_else(|| source.field_i32(10).unwrap_or(0));
         return match variant {
@@ -828,6 +844,98 @@ fn source_action(
     } else {
         ObjectAction::Keep
     }
+}
+
+fn judge_line_image_sources(document: &TextDocument) -> BTreeSet<usize> {
+    let mut source_signatures = BTreeSet::new();
+    let mut destination_signatures = BTreeSet::new();
+    let mut protected = BTreeSet::new();
+
+    for index in 0..document.line_count() {
+        let Some(content) = document.line_content(index) else {
+            continue;
+        };
+        let record = CsvRecord::from_line(index, content);
+        if record.is_command("#SRC_IMAGE")
+            && content
+                .windows(super::judge_line::IMAGE_FALLBACK_MARKER.len())
+                .any(|window| window == super::judge_line::IMAGE_FALLBACK_MARKER)
+        {
+            protected.insert(index);
+        }
+        if record.is_command("#SRC_JUDGELINE")
+            && let Some(signature) = source_signature(&record)
+        {
+            source_signatures.insert(signature);
+        }
+        if record.is_command("#DST_JUDGELINE")
+            && let Some(signature) = destination_signature(&record)
+        {
+            destination_signatures.insert(signature);
+        }
+    }
+
+    if source_signatures.is_empty() || destination_signatures.is_empty() {
+        return protected;
+    }
+
+    for source_index in 0..document.line_count() {
+        let Some(content) = document.line_content(source_index) else {
+            continue;
+        };
+        let source = CsvRecord::from_line(source_index, content);
+        if !source.is_command("#SRC_IMAGE")
+            || source_signature(&source)
+                .is_none_or(|signature| !source_signatures.contains(&signature))
+        {
+            continue;
+        }
+
+        for destination_index in source_index.saturating_add(1)..document.line_count() {
+            let Some(content) = document.line_content(destination_index) else {
+                continue;
+            };
+            let destination = CsvRecord::from_line(destination_index, content);
+            if destination
+                .command()
+                .is_some_and(|command| command.starts_with("#SRC_"))
+            {
+                break;
+            }
+            if destination.is_command("#DST_IMAGE")
+                && destination_signature(&destination)
+                    .is_some_and(|signature| destination_signatures.contains(&signature))
+            {
+                protected.insert(source_index);
+                break;
+            }
+        }
+    }
+    protected
+}
+
+fn source_signature(record: &CsvRecord) -> Option<[i32; 9]> {
+    Some([
+        record.field_i32(1)?,
+        record.field_i32(2)?,
+        record.field_i32(3)?,
+        record.field_i32(4)?,
+        record.field_i32(5)?,
+        record.field_i32(6)?,
+        record.field_i32(7)?,
+        record.field_i32(8)?,
+        record.field_i32(9)?,
+    ])
+}
+
+fn destination_signature(record: &CsvRecord) -> Option<[i32; 5]> {
+    Some([
+        record.field_i32(1)?,
+        record.field_i32(3)?,
+        record.field_i32(4)?,
+        record.field_i32(5)?,
+        record.field_i32(6)?,
+    ])
 }
 
 fn effective_image_timer(

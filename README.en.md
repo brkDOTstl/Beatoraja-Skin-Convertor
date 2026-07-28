@@ -13,6 +13,8 @@ folder name and recognizes SD, HD, FHD, and 4K canvases.
 Every `.dxa` archive is unpacked automatically during generation. This is a mandatory compatibility
 stage because beatoraja cannot read LR2 fonts directly from DXA archives. The bundled
 `DxaDecode.exe` runs locally, and the original `.dxa` files remain in the generated skin.
+The LR2 real-time `num=114` POOR counter is also always mapped to beatoraja `num=426`
+(POOR + MISS). This compatibility stage has no disable switch.
 
 Implemented rules:
 
@@ -33,6 +35,8 @@ Enabling `lr2-dark-mode` adds an `LR2 DARK MODE` customization entry to each con
 with in-game `OFF`, `DARK`, and `DARK2` choices. Only CSV files recursively referenced by Play
 headers are transformed; unrelated Result and Select modules are left unchanged.
 SUDDEN values, green numbers, and LIFT numbers remain visible in DARK2.
+Native judgment lines and beatoraja compatibility images with matching source and destination
+geometry remain visible in both DARK variants.
 This is an opt-in rule available in manual mode and is not enabled by the built-in presets.
 
 Exposed but not automated yet:

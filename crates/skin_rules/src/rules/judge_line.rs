@@ -14,6 +14,7 @@ const RULE_ID: &str = "judge-line-follow";
 const GENERATED_ASSET_DIR: &str = "_bms-skin-generator";
 const BLACK_REFERENCE: i32 = 110;
 const WHITE_REFERENCE: i32 = 111;
+pub(crate) const IMAGE_FALLBACK_MARKER: &[u8] = b"//bms-skin-generator:JUDGE_LINE_IMAGE_FALLBACK";
 
 // Opaque 1x1 RGBA PNGs. LR2's gr=110/111 references represent these two colors,
 // but beatoraja cannot resolve those references from SRC_JUDGELINE.
@@ -236,6 +237,7 @@ fn update_judge_lines(
                 );
             } else if image_fallback_group {
                 record.set_field_ascii(0, "#SRC_IMAGE");
+                record.fields.push(IMAGE_FALLBACK_MARKER.to_vec());
                 replace_record(
                     file,
                     index,
