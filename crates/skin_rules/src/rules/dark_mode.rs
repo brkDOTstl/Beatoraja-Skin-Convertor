@@ -774,6 +774,13 @@ fn is_lane_cover_source(source: &CsvRecord) -> bool {
                 .is_some_and(|value_id| value_id == 4 || value_id == 5))
 }
 
+fn is_lane_cover_number(source: &CsvRecord) -> bool {
+    source.is_command("#SRC_NUMBER")
+        && source
+            .field_i32(11)
+            .is_some_and(|num| matches!(num, 14 | 15 | 313 | 314))
+}
+
 fn source_action(
     source: &CsvRecord,
     variant: DarkVariant,
@@ -806,6 +813,10 @@ fn source_action(
         } else {
             ObjectAction::Keep
         };
+    }
+
+    if is_lane_cover_number(source) {
+        return ObjectAction::Keep;
     }
 
     let secondary = matches!(

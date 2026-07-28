@@ -59,8 +59,9 @@ artwork and geometry mistakes already present in the source skin.
   destination frames are made transparent. `DARK` hides static `SRC_IMAGE` groups. `DARK2` keeps
   only IMAGE timers `2`, `3`, `48`, `49`, `50..69`, and `140`, hides secondary HUD groups, and
   preserves SUDDEN and LIFT lane covers as opaque black boards. A rhythm line remains visible when
-  timer `140` is declared on either its source or destination. Notes, lines, judgment lines, gauges,
-  BGA, `NOWJUDGE`, and `NOWCOMBO` are not filtered. This rule is opt-in.
+  timer `140` is declared on either its source or destination. Lane-cover-related numbers `14`,
+  `15`, `313`, and `314` remain visible. Notes, lines, judgment lines, gauges, BGA, `NOWJUDGE`, and
+  `NOWCOMBO` are not filtered. This rule is opt-in.
 
 Key-laser sprite reconstruction, gauge-label sprite ordering, and arbitrary custom LIFT images stay
 manual because their source rectangles and animation ordering are skin-specific.

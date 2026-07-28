@@ -200,6 +200,43 @@ fn dark_modes_keep_a_rhythm_line_with_timer_140_on_its_destination() {
 }
 
 #[test]
+fn dark2_keeps_sudden_green_and_lift_numbers() {
+    let root = make_temp_root("dark-mode-lane-cover-numbers-source");
+    fs::create_dir_all(root.join("Play")).expect("create Play directory");
+    fs::write(
+        root.join("play.lr2skin"),
+        "#INFORMATION,0,title,maker,\r\n#INCLUDE,Play\\layout.csv\r\n",
+    )
+    .expect("write header");
+    let mut layout = String::new();
+    for num in [14, 15, 313, 314, 100] {
+        layout.push_str(&format!("#SRC_NUMBER,0,0,0,0,10,10,10,1,0,0,{num},0,3\r\n"));
+        layout.push_str(&format!(
+            "#DST_NUMBER,0,0,{num},0,10,10,0,255,255,255,255,1,0,0,0,0,0,0,0,0,0\r\n"
+        ));
+    }
+    fs::write(root.join("Play").join("layout.csv"), layout).expect("write layout");
+
+    let output = make_temp_root("dark-mode-lane-cover-numbers-output");
+    generate(
+        &root,
+        &output,
+        ConversionOptions {
+            rules: vec!["lr2-dark-mode".to_owned()],
+            ..ConversionOptions::default()
+        },
+    )
+    .expect("generation should succeed");
+
+    let dark2 = fs::read_to_string(output.join("Play").join("layout.csv.bmsg-dark2"))
+        .expect("read DARK2 CSV");
+    for num in [14, 15, 313, 314] {
+        assert!(dark2.contains(&format!("#DST_NUMBER,0,0,{num},0,10,10,0,255,255,255,255,")));
+    }
+    assert!(dark2.contains("#DST_NUMBER,0,0,100,0,10,10,0,0,255,255,255,"));
+}
+
+#[test]
 fn dark2_uses_the_exact_lr2_primary_timer_allowlist() {
     let kept = [2, 3, 48, 49, 50, 69, 140];
     let hidden = [0, 1, 4, 47, 70, 139, 141];

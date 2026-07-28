@@ -32,6 +32,7 @@ Implemented rules:
 Enabling `lr2-dark-mode` adds an `LR2 DARK MODE` customization entry to each converted Play skin,
 with in-game `OFF`, `DARK`, and `DARK2` choices. Only CSV files recursively referenced by Play
 headers are transformed; unrelated Result and Select modules are left unchanged.
+SUDDEN values, green numbers, and LIFT numbers remain visible in DARK2.
 This is an opt-in rule available in manual mode and is not enabled by the built-in presets.
 
 Exposed but not automated yet:

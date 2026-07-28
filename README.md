@@ -32,6 +32,7 @@ beatorajaがLR2のDXA内フォントを直接読み込めない問題に対応�
 `lr2-dark-mode`を有効にすると、変換後のPlayスキン設定に`LR2 DARK MODE`が追加され、
 `OFF`、`DARK`、`DARK2`をゲーム側で選択できます。Playヘッダーから実際に参照されるCSVだけを
 再帰的に変換し、他のResultやSelectモジュールは変更しません。
+DARK2でもSUDDEN数値、green number、LIFT numberは表示したまま維持します。
 この機能は手動モードで選択するオプトイン機能で、標準プリセットでは有効になりません。
 
 UIには表示されますが、まだ自動化されていないルール:
