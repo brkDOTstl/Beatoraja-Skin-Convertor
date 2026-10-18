@@ -12,6 +12,7 @@ use crate::{
 };
 
 const DECODER_BYTES: &[u8] = include_bytes!("../assets/DxaDecode.exe");
+#[cfg(windows)]
 const CREATE_NO_WINDOW: u32 = 0x0800_0000;
 static TEMP_SEQUENCE: AtomicU64 = AtomicU64::new(0);
 

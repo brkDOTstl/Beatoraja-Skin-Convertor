@@ -1,4 +1,6 @@
-use std::{fs, path::Path};
+use std::fs;
+#[cfg(windows)]
+use std::path::Path;
 
 use skin_core::analyze_path;
 use skin_rules::{ConversionOptions, dry_run, generate};

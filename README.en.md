@@ -24,6 +24,7 @@ Implemented rules:
 - `theme-path-rebase`
 - `asset-reference-repair`
 - `follow-lift-op4`
+- `key-laser-layer-compat`
 - `judge-line-follow`
 - `blend-fallback`
 - `lift-cover-transparent`
