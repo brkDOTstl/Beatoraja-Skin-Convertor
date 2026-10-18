@@ -19,6 +19,9 @@ Mandatory conversion stage:
   `num=426`, whose value is POOR + MISS. This restores LR2's combined normal/empty-POOR count and
   is applied before optional rules, including DARK variant generation. This stage has no disable
   switch.
+- One-shot LR2 bomb animations that end exactly at their cycle length are adjusted so beatoraja
+  does not wrap back to frame zero for a single frame after playback. This `lr2-bomb-cycle-boundary-compat`
+  stage keeps bomb speed unchanged and has no disable switch.
 
 Implemented rules:
 
@@ -61,7 +64,7 @@ artwork and geometry mistakes already present in the source skin.
 - `lr2-dark-mode`: add a skin-selectable `OFF` / `DARK` / `DARK2` route without consuming
   destination option fields. Hidden groups retain their parsed objects and draw order while all
   destination frames are made transparent. `DARK` hides static `SRC_IMAGE` groups. `DARK2` keeps
-  only IMAGE timers `2`, `3`, `48`, `49`, `50..69`, and `140`, hides secondary HUD groups, and
+  only IMAGE timers `2`, `3`, `48`, `49`, `50..=89`, and `140`, hides secondary HUD groups, and
   preserves SUDDEN and LIFT lane covers as opaque black boards. A rhythm line remains visible when
   timer `140` is declared on either its source or destination. Lane-cover-related numbers `14`,
   `15`, `313`, and `314` remain visible. Notes, lines, judgment lines, gauges, BGA, `NOWJUDGE`, and

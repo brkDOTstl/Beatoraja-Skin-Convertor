@@ -24,6 +24,7 @@ beatoraja固有の境界差も、BOMBの速度を変えずに必ず補正しま�
 - `theme-path-rebase`
 - `asset-reference-repair`
 - `follow-lift-op4`
+- `key-laser-layer-compat`
 - `judge-line-follow`
 - `blend-fallback`
 - `lift-cover-transparent`
