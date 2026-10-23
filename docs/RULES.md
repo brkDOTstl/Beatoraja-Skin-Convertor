@@ -64,13 +64,15 @@ artwork and geometry mistakes already present in the source skin.
 - `lr2-dark-mode`: add a skin-selectable `OFF` / `DARK` / `DARK2` route without consuming
   destination option fields. Hidden groups retain their parsed objects and draw order while all
   destination frames are made transparent. `DARK` hides static `SRC_IMAGE` groups. `DARK2` keeps
-  only IMAGE timers `2`, `3`, `48`, `49`, `50..=89`, and `140`, hides secondary HUD groups, and
+  only IMAGE timers `2`, `3`, `42..=45`, `48`, `49`, `50..=89`, and `140`, hides secondary HUD groups, and
   preserves SUDDEN and LIFT lane covers as opaque black boards. A rhythm line remains visible when
   timer `140` is declared on either its source or destination. Lane-cover-related numbers `14`,
   `15`, `313`, and `314` remain visible. Notes, lines, judgment lines, gauges, BGA, `NOWJUDGE`, and
   `NOWCOMBO` are not filtered. Static beatoraja judgment-line compatibility images are recognized
   by matching both their source slice and destination geometry to the native judgment line, and
-  remain visible in both DARK variants. This rule is opt-in.
+  remain visible in both DARK variants. Gauge helper images driven by gauge-type or gauge-value
+  options, or by gauge-rise and gauge-max timers, also remain visible in both variants. This rule
+  is opt-in.
 
 Key-laser sprite reconstruction, gauge-label sprite ordering, and arbitrary custom LIFT images stay
 manual because their source rectangles and animation ordering are skin-specific.

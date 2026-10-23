@@ -571,9 +571,9 @@ fn build_csv_variant(
     let mut active = ObjectAction::Keep;
     let mut active_destination = None;
     let mut stats = VariantStats::default();
-    let judge_line_images = judge_line_image_sources(document);
+    let protected_images = protected_image_sources(document);
     let lane_cover_plan = if variant == DarkVariant::Dark2 {
-        lane_cover_plan_with_protected_images(document, &judge_line_images)
+        lane_cover_plan_with_protected_images(document, &protected_images)
     } else {
         LaneCoverPlan::default()
     };
@@ -619,7 +619,7 @@ fn build_csv_variant(
                 &record,
                 variant,
                 effective_image_timer(document, index, &record),
-                judge_line_images.contains(&index),
+                protected_images.contains(&index),
             );
             active_destination = destination_for_source(&command);
             match active {
@@ -678,7 +678,7 @@ fn build_csv_variant(
 }
 
 fn lane_cover_plan(document: &TextDocument) -> LaneCoverPlan {
-    let protected_images = judge_line_image_sources(document);
+    let protected_images = protected_image_sources(document);
     lane_cover_plan_with_protected_images(document, &protected_images)
 }
 
@@ -796,9 +796,9 @@ fn source_action(
     source: &CsvRecord,
     variant: DarkVariant,
     effective_image_timer: Option<i32>,
-    protected_judge_line: bool,
+    protected_image: bool,
 ) -> ObjectAction {
-    if protected_judge_line {
+    if protected_image {
         return ObjectAction::Keep;
     }
 
@@ -914,6 +914,62 @@ fn judge_line_image_sources(document: &TextDocument) -> BTreeSet<usize> {
     protected
 }
 
+fn protected_image_sources(document: &TextDocument) -> BTreeSet<usize> {
+    let mut protected = judge_line_image_sources(document);
+    protected.extend(gauge_image_sources(document));
+    protected
+}
+
+fn gauge_image_sources(document: &TextDocument) -> BTreeSet<usize> {
+    let mut protected = BTreeSet::new();
+    let mut active_source = None;
+
+    for index in 0..document.line_count() {
+        let Some(content) = document.line_content(index) else {
+            continue;
+        };
+        let record = CsvRecord::from_line(index, content);
+        let Some(command) = record.command() else {
+            continue;
+        };
+
+        if command.starts_with("#SRC_") {
+            active_source = record.is_command("#SRC_IMAGE").then_some(index);
+            if active_source.is_some() && record.field_i32(10).is_some_and(is_gauge_timer) {
+                protected.insert(index);
+            }
+            continue;
+        }
+
+        let Some(source_index) = active_source else {
+            continue;
+        };
+        if !record.is_command("#DST_IMAGE") {
+            continue;
+        }
+
+        let gauge_timer = record.field_i32(17).is_some_and(is_gauge_timer);
+        let gauge_option = [18, 19, 20]
+            .into_iter()
+            .filter_map(|field| record.field_i32(field))
+            .any(is_gauge_option);
+        if gauge_timer || gauge_option {
+            protected.insert(source_index);
+        }
+    }
+
+    protected
+}
+
+fn is_gauge_timer(timer: i32) -> bool {
+    (42..=45).contains(&timer)
+}
+
+fn is_gauge_option(option: i32) -> bool {
+    let option = option.saturating_abs();
+    matches!(option, 42..=45 | 63..=66 | 230..=240 | 250..=260)
+}
+
 fn source_signature(record: &CsvRecord) -> Option<[i32; 9]> {
     Some([
         record.field_i32(1)?,
@@ -978,7 +1034,7 @@ fn effective_image_timer(
 }
 
 fn dark2_keeps_timer(timer: i32) -> bool {
-    matches!(timer, 2 | 3 | 48 | 49 | 140) || (50..=89).contains(&timer)
+    matches!(timer, 2 | 3 | 42..=45 | 48 | 49 | 140) || (50..=89).contains(&timer)
 }
 
 fn destination_for_source(source: &str) -> Option<&'static str> {

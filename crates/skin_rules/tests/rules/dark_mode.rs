@@ -328,8 +328,8 @@ fn dark2_keeps_sudden_green_and_lift_numbers() {
 
 #[test]
 fn dark2_uses_the_exact_lr2_primary_timer_allowlist() {
-    let kept = [2, 3, 48, 49, 50, 69, 70, 89, 140];
-    let hidden = [0, 1, 4, 47, 90, 139, 141];
+    let kept = [2, 3, 42, 43, 44, 45, 48, 49, 50, 69, 70, 89, 140];
+    let hidden = [0, 1, 4, 41, 46, 47, 90, 139, 141];
     let mut layout = String::new();
     for timer in kept.into_iter().chain(hidden) {
         layout.push_str(&format!("#SRC_IMAGE,0,0,0,0,1,1,1,1,0,{timer},0,0,0\r\n"));
@@ -366,6 +366,58 @@ fn dark2_uses_the_exact_lr2_primary_timer_allowlist() {
     for timer in hidden {
         assert!(dark2.contains(&format!("#SRC_IMAGE,0,0,0,0,1,1,1,1,0,{timer},")));
         assert!(dark2.contains(&format!("#DST_IMAGE,0,0,{timer},0,1,1,0,0,255,255,255,")));
+    }
+}
+
+#[test]
+fn dark_modes_keep_gauge_type_value_and_animation_images() {
+    let root = make_temp_root("dark-mode-gauge-images-source");
+    fs::create_dir_all(root.join("Play")).expect("create Play directory");
+    fs::write(
+        root.join("play.lr2skin"),
+        "#INFORMATION,0,title,maker,\r\n#INCLUDE,Play\\layout.csv\r\n",
+    )
+    .expect("write header");
+    fs::write(
+        root.join("Play").join("layout.csv"),
+        concat!(
+            "#IMAGE,gauge.png\r\n",
+            "#SRC_GROOVEGAUGE,0,0,0,0,4,4,4,1,0,0,1,0\r\n",
+            "#DST_GROOVEGAUGE,0,0,0,0,100,10,0,255,255,255,255,1,0,0,0,0,0,0,0,0\r\n",
+            "#SRC_IMAGE,0,0,0,0,1,1,1,1,0,0,0,0,0\r\n",
+            "#DST_IMAGE,0,0,10,0,1,1,0,255,255,255,255,1,0,0,0,0,0,230,42,0\r\n",
+            "#SRC_IMAGE,0,0,0,0,1,1,1,1,0,0,0,0,0\r\n",
+            "#DST_IMAGE,0,0,20,0,1,1,0,255,255,255,255,1,0,0,0,0,0,-250,-63,0\r\n",
+            "#SRC_IMAGE,0,0,0,0,1,1,1,1,0,44,0,0,0\r\n",
+            "#DST_IMAGE,0,0,30,0,1,1,0,255,255,255,255,1,0,0,0,0,44,0,0,0,0\r\n",
+            "#SRC_IMAGE,0,0,0,0,1,1,1,1,0,0,0,0,0\r\n",
+            "#DST_IMAGE,0,0,40,0,1,1,0,255,255,255,255,1,0,0,0,0,0,0,0,0,0\r\n",
+        ),
+    )
+    .expect("write layout");
+
+    let output = make_temp_root("dark-mode-gauge-images-output");
+    generate(
+        &root,
+        &output,
+        ConversionOptions {
+            rules: vec!["lr2-dark-mode".to_owned()],
+            ..ConversionOptions::default()
+        },
+    )
+    .expect("generation should succeed");
+
+    for suffix in ["dark1", "dark2"] {
+        let csv = fs::read_to_string(
+            output
+                .join("Play")
+                .join(format!("layout.csv.bmsg-{suffix}")),
+        )
+        .expect("read generated CSV");
+        for x in [10, 20, 30] {
+            assert!(csv.contains(&format!("#DST_IMAGE,0,0,{x},0,1,1,0,255,255,255,255,")));
+        }
+        assert!(csv.contains("#DST_IMAGE,0,0,40,0,1,1,0,0,255,255,255,"));
     }
 }
 
