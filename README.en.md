@@ -40,6 +40,8 @@ headers are transformed; unrelated Result and Select modules are left unchanged.
 Normal bombs, LN hold bombs, SUDDEN values, green numbers, and LIFT numbers remain visible in DARK2.
 Native judgment lines and beatoraja compatibility images with matching source and destination
 geometry remain visible in both DARK variants.
+Both variants also preserve the groove gauge and helper images driven by gauge type, gauge-value
+ranges, and gauge-rise or gauge-max timers.
 This is an opt-in rule available in manual mode and is not enabled by the built-in presets.
 
 Exposed but not automated yet:
